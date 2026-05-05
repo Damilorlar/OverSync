@@ -237,6 +237,15 @@ function parseCsv(value?: string): string[] {
     .filter(Boolean);
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+    })
+  ]);
+}
+
 // Relayer configuration from environment variables
 export const RELAYER_CONFIG = {
   // Service settings
@@ -250,6 +259,7 @@ export const RELAYER_CONFIG = {
   enableMockMode: process.env.ENABLE_MOCK_MODE === 'true',
   debug: process.env.DEBUG === 'true',
   resolverAllowlist: parseCsv(process.env.RELAYER_RESOLVER_ADDRESSES),
+  rpcTimeoutMs: Number(process.env.RELAYER_RPC_TIMEOUT_MS) || 8000,
   
   // Ethereum configuration
   ethereum: {
@@ -1637,7 +1647,11 @@ const activeOrders = new Map();
         
         while (balanceRetryCount2 <= maxBalanceRetries2) {
           try {
-            balance = await provider.getBalance(relayerWallet.address);
+            balance = await withTimeout(
+              provider.getBalance(relayerWallet.address),
+              RELAYER_CONFIG.rpcTimeoutMs,
+              'RPC getBalance timeout'
+            );
             console.log('💰 Relayer ETH balance:', ethers.formatEther(balance), 'ETH');
             break; // Success, exit retry loop
           } catch (error: any) {
@@ -1782,7 +1796,11 @@ const activeOrders = new Map();
         
         while (txRetryCount <= maxTxRetries) {
           try {
-            ethTxResponse = await relayerWallet.sendTransaction(tx);
+            ethTxResponse = await withTimeout(
+              relayerWallet.sendTransaction(tx),
+              RELAYER_CONFIG.rpcTimeoutMs,
+              'RPC sendTransaction timeout'
+            );
             break; // Success, exit retry loop
           } catch (txError: any) {
             txRetryCount++;
