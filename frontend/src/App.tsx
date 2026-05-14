@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BridgeForm from './components/BridgeForm'
 
 import TransactionHistory from './components/TransactionHistory'
@@ -37,6 +37,43 @@ function App() {
 
   // Toast hook
   const toast = useToast();
+
+  // Auto-connect MetaMask if previously connected
+  useEffect(() => {
+    const checkMetaMaskConnection = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            setEthAddress(accounts[0]);
+          }
+        } catch (error) {
+          console.log('Could not check MetaMask connection:', error);
+        }
+      }
+    };
+
+    checkMetaMaskConnection();
+
+    // Listen for account changes
+    if (window.ethereum) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length > 0) {
+          setEthAddress(accounts[0]);
+        } else {
+          setEthAddress('');
+        }
+      };
+
+      (window.ethereum as any).on('accountsChanged', handleAccountsChanged);
+
+      return () => {
+        if (window.ethereum) {
+          (window.ethereum as any).removeListener('accountsChanged', handleAccountsChanged);
+        }
+      };
+    }
+  }, []);
 
   // Single source of truth for testnet/mainnet across URL + MetaMask + Freighter.
   // Replaces the previous local `currentNetwork` state and 2s page-reload hack

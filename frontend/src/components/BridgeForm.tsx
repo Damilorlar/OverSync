@@ -310,6 +310,9 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
     } catch (error: any) {
       console.error('❌ Balance fetch error:', error);
       
+      // Always set balance to 0 on error to prevent stuck "Loading..." state
+      setBalance('0');
+      
       // Show user-friendly error message for circuit breaker
       if (error.code === -32603 && error.message?.includes('circuit breaker')) {
         console.log('🔄 MetaMask circuit breaker is active - this is temporary');
@@ -321,20 +324,6 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
             'MetaMask çok fazla istek aldı. Lütfen 1-2 dakika bekleyin veya MetaMask\'i yeniden başlatın.'
           );
         }
-        
-        // Don't reset balance to 0, keep the last known value unless it's empty
-        if (balance === '0' || balance === '') {
-          setBalance('Loading...');
-        }
-        
-        // Set a longer retry interval for circuit breaker recovery
-        setTimeout(() => {
-          console.log('🔄 Attempting balance fetch after circuit breaker cooldown...');
-          fetchBalance();
-        }, 10000); // Retry after 10 seconds
-        
-      } else {
-        setBalance('0');
       }
     }
   };
