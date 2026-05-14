@@ -3,7 +3,7 @@
 Step-by-step instructions for deploying OverSync v2 to testnet or
 mainnet. Replaces the previous `MAINNET_SETUP.md` /
 `MAINNET_SETUP_UPDATED.md` / `RATE_LIMIT_FIX.md` documents, which
-contained inconsistencies the SCF #40 panel flagged.
+contained inconsistencies flagged in v1 review feedback.
 
 ## Prerequisites
 

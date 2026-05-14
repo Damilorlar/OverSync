@@ -5,7 +5,8 @@ import TransactionHistory from './components/TransactionHistory'
 
 import { ToastContainer, useToast } from './components/Toast'
 import { useFreighter } from './hooks/useFreighter'
-import { isTestnet } from './config/networks'
+import { useNetworkMode } from './lib/useNetworkMode'
+import NetworkMismatchBanner from './components/NetworkMismatchBanner'
 
 // Window objeleri için type definitions
 declare global {
@@ -23,8 +24,7 @@ function App() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'bridge' | 'history'>('bridge');
-  const [currentNetwork, setCurrentNetwork] = useState<'testnet' | 'mainnet'>(isTestnet() ? 'testnet' : 'mainnet');
-  
+
   // Freighter hook usage
   const {
     isConnected: stellarConnected,
@@ -38,70 +38,32 @@ function App() {
   // Toast hook
   const toast = useToast();
 
-  // Network toggle handler with MetaMask auto-switching
+  // Single source of truth for testnet/mainnet across URL + MetaMask + Freighter.
+  // Replaces the previous local `currentNetwork` state and 2s page-reload hack
+  // that allowed URL and wallet to drift apart.
+  const networkState = useNetworkMode({
+    ethAddress: ethAddress || undefined,
+    stellarAddress: stellarAddress || undefined,
+  });
+  const currentNetwork = networkState.mode;
+
   const toggleNetwork = async () => {
     const newNetwork = currentNetwork === 'testnet' ? 'mainnet' : 'testnet';
-    setCurrentNetwork(newNetwork);
-    
-    // Auto-switch MetaMask network if connected
-    if (window.ethereum && ethAddress) {
-      try {
-        const targetChainId = newNetwork === 'mainnet' ? '0x1' : '0xaa36a7'; // 0x1 = 1 (Ethereum Mainnet)
-        const networkName = newNetwork === 'mainnet' ? 'Ethereum Mainnet' : 'Sepolia Testnet';
-        
-        // Try to switch network
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: targetChainId }],
-        });
-        
-        toast.success('Network Switched!', `MetaMask switched to ${networkName}`);
-        
-      } catch (switchError: any) {
-        // If network not added (error 4902), add it
-        if (switchError.code === 4902 && newNetwork === 'mainnet') {
-          try {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: '0x1', // 1 for Ethereum Mainnet
-                chainName: 'Ethereum Mainnet',
-                rpcUrls: ['https://eth-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY_HERE'],
-                blockExplorerUrls: ['https://etherscan.io'],
-                nativeCurrency: {
-                  name: 'Ether',
-                  symbol: 'ETH',
-                  decimals: 18
-                }
-              }],
-            });
-            toast.success('Network Added!', 'Ethereum Mainnet added to MetaMask');
-          } catch (addError: any) {
-            toast.error('Network Switch Failed', 'Please switch MetaMask manually');
-          }
-        } else {
-          toast.warning('Manual Switch Required', 'Please switch MetaMask network manually');
-        }
+    const result = await networkState.setMode(newNetwork);
+
+    if (!result.ok) {
+      if (result.reason === 'user-rejected') {
+        toast.warning('Network change cancelled', 'You declined the wallet switch — app is still on ' + (currentNetwork === 'mainnet' ? 'Mainnet' : 'Testnet') + '.');
+      } else {
+        toast.error('Network switch failed', 'Please switch your wallet network manually, then click the toggle again.');
       }
+      return;
     }
-    
-    // Update URL parameter
-    if (typeof window !== 'undefined') {
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('network', newNetwork);
-      window.history.replaceState({}, '', currentUrl.toString());
-      
-      // Show network change notification
-      toast.success(
-        'Network Mode Changed!', 
-        `Switched to ${newNetwork === 'mainnet' ? 'Mainnet' : 'Testnet'} mode`
-      );
-      
-      // Auto refresh after 2 seconds to apply network changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    }
+
+    toast.success(
+      'Network mode changed',
+      `Switched to ${newNetwork === 'mainnet' ? 'Mainnet' : 'Testnet'} mode`,
+    );
   };
 
 
@@ -306,7 +268,7 @@ function App() {
         </div>
       </nav>
 
-
+      <NetworkMismatchBanner networkState={networkState} />
 
       {/* Hero Section */}
       <div className="text-center py-8 px-6">

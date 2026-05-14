@@ -1,9 +1,8 @@
-# OverSync — SCF #40 Panel Response
+# OverSync — Review Feedback Response
 
-This document is OverSync's point-by-point response to the SCF #40
-panel feedback that recommended OverSync not pass. Every claim below
-links to source code or test output so reviewers can verify it
-independently before SCF #41.
+This document is OverSync's point-by-point response to the v1 review
+feedback. Every claim below links to source code or test output so
+reviewers can verify it independently.
 
 ---
 
@@ -159,13 +158,13 @@ the rebuild. Concretely:
    && pnpm test`. There are now 43 automated tests across four
    languages (Rust, Solidity, TS, Hardhat-TS) in CI.
 
-A formal team expansion is planned post-Tranche 1; the SCF #41
-submission proposes funding for one full-time auditor liaison and a
-contracted Soroban specialist.
+A formal team expansion is planned post-Tranche 1: funding requests
+include a full-time auditor liaison and a contracted Soroban
+specialist.
 
 ---
 
-## 9. *"Budget items don't match SCF guidelines"*
+## 9. *"Budget items don't match grant guidelines"*
 
 **Response.** The revised budget is below. Numbers are USD.
 
@@ -174,17 +173,17 @@ contracted Soroban specialist.
 | 1 — Audit preparation | Foundry fuzz + invariant suite; Slither must-not-fail CI gate; differential test harness for both chains | $8,000 |
 | 1 — Soroban hardening | Resolver registry binding enforcement; partial-fill support; second round of unit tests; testnet load test | $7,000 |
 | 1 — Coordinator productionising | Postgres migration; horizontal scaling test; observability stack | $5,000 |
-| 2 — Independent audit | Engage two independent auditors for both HTLC contracts (audit fees paid directly to firms, not SCF-funded) | $0 (separate funding) |
+| 2 — Independent audit | Engage two independent auditors for both HTLC contracts (audit fees paid directly to firms, not grant-funded) | $0 (separate funding) |
 | 2 — Bug bounty bootstrap | Initial bug bounty pool | $5,000 |
 | 2 — Resolver onboarding | Grants for the first 3 community resolvers (capped per resolver) | $3,000 each = $9,000 |
 | 2 — Beta program | Bridge insurance fund (catastrophic event coverage, returned if unused) | $6,000 |
 
 **Total request: $40,000.**
 
-The original $30,000 (Audit Preparation $10K, Testing $10K, Beta User
-Program $10K) was rejected for being too broad and not mapped to
-deliverables. The revised structure is tranche-gated, with the second
-tranche only released after first-tranche deliverables ship.
+The previous $30,000 ask (Audit Preparation $10K, Testing $10K, Beta
+User Program $10K) was too broad and not mapped to deliverables. The
+revised structure is tranche-gated, with the second tranche only
+released after first-tranche deliverables ship.
 
 ---
 

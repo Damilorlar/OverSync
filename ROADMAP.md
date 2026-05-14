@@ -1,0 +1,111 @@
+# OverSync v2 — Roadmap
+
+The bridging landscape is moving fast: Circle's CCTP v2 entered Stellar
+testnet in April 2026, Axelar's Interchain Token Service shipped on
+Stellar mainnet on 16 February 2026, and Allbridge keeps adding pools.
+OverSync is not racing to compete with them on coverage. We are
+shipping a focused product — trust-minimised native cross-chain swaps
+between Ethereum and Stellar — and the roadmap below reflects that.
+
+Every milestone has a concrete deliverable, a verification artefact and
+a status flag. Dates beyond the current quarter are intentionally
+ranges, not pinpoint commitments, because audit timelines and bug-bounty
+findings move them.
+
+Legend: ✅ shipped · 🛠 in progress · 🗓 scheduled · ⏳ depends on prior milestone
+
+---
+
+## Q2 2026 — v2.0 rebuild (current quarter)
+
+| Milestone | Status | Deliverable |
+|---|---|---|
+| Phase 0 — repository cleanup, remove mock data, single canonical EVM contract path | ✅ | Branch `v2-rebuild`; obsolete docs removed; env example fixed |
+| Phase 1 — Soroban HTLC contract | ✅ | `soroban/contracts/htlc/`; 10 unit tests passing |
+| Phase 2 — EVM v2 contracts | ✅ | `contracts/contracts/v2/`; 21 Hardhat tests passing |
+| Phase 3 — open resolver network | ✅ | `resolver/` runner + Docker image + `docs/RESOLVERS.md` |
+| Phase 4 — coordinator full rewrite | ✅ | `coordinator/`; 4 service tests passing |
+| Phase 5 — shared `@oversync/sdk` | ✅ | `packages/sdk/`; 8 unit tests |
+| Phase 6 — frontend rewrite | ✅ | Refund dialog, network-mode hook, production console strip |
+| Phase 7 — CI/CD pipelines | ✅ | `.github/workflows/{ci,contracts,release}.yml` |
+| Phase 8 — documentation rewrite | ✅ | README, ARCHITECTURE, TRUST_MODEL, DIFFERENTIATION, SECURITY, DEPLOYMENT |
+
+## Q3 2026 — Audit preparation and launch hardening
+
+| Milestone | Status | Deliverable | Verifiable on |
+|---|---|---|---|
+| Foundry fuzz + invariant suite for `HTLCEscrow.sol` | 🛠 | `contracts/test/foundry/` directory + CI gate | GitHub Actions |
+| Slither must-not-fail CI gate (currently advisory) | 🛠 | Slither failure breaks the build | GitHub Actions |
+| Differential test harness across EVM ↔ Soroban (same hashlock and preimage round-trip) | 🗓 | `e2e/cross-chain.test.ts` | Local + CI |
+| Sepolia load test (1k concurrent orders, 2-week soak) | 🗓 | Public Sepolia dashboard + report | Dashboard URL |
+| Soroban resolver-registry binding enforcement in HTLC (currently soft) | 🗓 | Contract upgrade + 2 new tests | Soroban testnet |
+| Coordinator Postgres migration path | 🗓 | `coordinator/migrations/` + integration test | CI |
+| Coordinator observability stack (Prometheus + Grafana) | 🗓 | `coordinator/ops/` Docker compose | Repo |
+
+**Exit criterion:** all Q3 milestones complete, no high-severity issues
+open from internal review, then engage external auditors.
+
+## Q4 2026 — Independent audits
+
+| Milestone | Status | Deliverable | Verifiable on |
+|---|---|---|---|
+| Audit firm A — EVM contracts (HTLCEscrow + ResolverRegistry) | 🗓 | Public audit report | Auditor's site + repo |
+| Audit firm B — Soroban contracts (oversync-htlc + oversync-resolver-registry) | 🗓 | Public audit report | Auditor's site + repo |
+| Remediation diff and re-audit pass | 🗓 | Annotated PRs linking findings to fixes | GitHub |
+| Bug bounty programme launched (Immunefi or comparable) | 🗓 | Bounty programme URL | Immunefi |
+| Multisig migration of `ResolverRegistry.owner` (2-of-3 testnet, prep for mainnet) | 🗓 | Multisig address committed to repo | Etherscan / Stellar Expert |
+
+**Exit criterion:** two audits public, all medium+ findings remediated,
+bounty open for 14 days with no critical reports.
+
+## Q1 2027 — Mainnet launch
+
+| Milestone | Status | Deliverable | Verifiable on |
+|---|---|---|---|
+| Mainnet deployment of EVM contracts | 🗓 | Deployed addresses in `deployments.mainnet.json`, verified on Etherscan | Etherscan |
+| Mainnet deployment of Soroban contracts | 🗓 | Deployed contract ids in `deployments.public.json` | Stellar Expert |
+| Coordinator production deployment (behind CDN/WAF) | 🗓 | Live coordinator URL with SLOs published | Status page |
+| First three community resolvers onboarded (open application + reference economics) | 🗓 | 3 registered addresses, ≥30 days active | Registry contract |
+| 14-day continuous mainnet TVL > $1k with zero incidents | 🗓 | Public dashboard of TVL + volume + uptime | Dashboard |
+
+**Exit criterion:** all above shipped; we transition from "beta" to
+"public release" in repo README.
+
+## Q2–Q3 2027 — v2.1 and ecosystem hooks
+
+| Milestone | Status | Deliverable |
+|---|---|---|
+| Partial fills on the Soroban side (parity with EVM) | 🗓 | Updated `oversync-htlc` + tests |
+| Soroban non-XLM asset support in the SDK | 🗓 | `@oversync/sdk` 2.1 with multi-asset orders |
+| Native USDC support routed via CCTP v2 inside an OverSync swap (composable, optional fast path) | 🗓 | Reference adapter contract + e2e test |
+| Axelar ITS adapter: any Axelar-wrapped asset can be the destination leg of an OverSync swap | 🗓 | Reference resolver that bridges via Axelar |
+| 1inch Fusion+ resolver mesh public integration | ⏳ | Joint announcement + co-published runner |
+| DAO Timelock + Governor for `ResolverRegistry.owner` | 🗓 | Governance contracts deployed; multisig retires |
+
+These v2.1 items are deliberately optional. We will ship them based on
+real demand from integrators after mainnet.
+
+---
+
+## Cross-cutting commitments
+
+- **Open source.** All code in this repository is MIT-licensed. The
+  resolver runner image is on GitHub Container Registry.
+- **No silent admin moves.** Every change to a privileged on-chain
+  role (`ResolverRegistry.owner`, future DAO) is announced in `CHANGELOG.md`
+  before the on-chain transaction is sent.
+- **Audit-first.** No mainnet contract is deployed before its audit
+  report is public. The exception is the testnet builds we already
+  ship for review.
+- **Real metrics only.** No uptime / volume / TVL claim appears in
+  marketing material that is not verifiable on a public dashboard.
+
+## Open dependencies and risks
+
+| Dependency / risk | Mitigation |
+|---|---|
+| CCTP v2 Stellar mainnet timing slips | Independent of our roadmap; affects Q2–Q3 2027 USDC composability only. |
+| Axelar ITS Stellar API surface changes | Adapter is isolated; only v2.1 ecosystem work is affected. |
+| Audit findings push Q1 2027 mainnet | We ship to mainnet when audits are clean. We do not pre-announce a hard date. |
+| Solo-team bus factor | Open resolver protocol means the bridge keeps working even if the core team is unavailable; CI + docs lower the onboarding bar. |
+| Resolver network coldstart | A bootstrap grant pool is part of the Tranche 2 funding ask (see `docs/REVIEW_RESPONSE.md`). |

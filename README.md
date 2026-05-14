@@ -5,7 +5,7 @@ Stellar, built around symmetric hash + time-lock contracts (HTLCs) on
 both chains.
 
 > **v2 rebuild in progress.** This repository is in the middle of a
-> ground-up rebuild driven by feedback from the SCF #40 panel. See
+> ground-up rebuild driven by v1 review feedback. See
 > [`ARCHITECTURE.md`](ARCHITECTURE.md) for the target design and the
 > per-component README files (`soroban/`, `contracts/`, `coordinator/`,
 > `resolver/`, `packages/sdk/`) for what currently ships. The legacy
@@ -86,9 +86,11 @@ the on-chain `ResolverRegistry`; misbehaviour is slashed. See
 
 ## Documentation
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — target system architecture
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — full technical architecture (sequence diagrams, invariants, failure catalogue)
+- [`ROADMAP.md`](ROADMAP.md) — milestone-by-milestone delivery plan with verifiable artefacts
 - [`docs/TRUST_MODEL.md`](docs/TRUST_MODEL.md) — non-custodial proofs
-- [`docs/DIFFERENTIATION.md`](docs/DIFFERENTIATION.md) — comparison with Allbridge and similar bridges
+- [`docs/DIFFERENTIATION.md`](docs/DIFFERENTIATION.md) — comparison with CCTP v2, Axelar ITS, Allbridge
+- [`docs/TRACTION.md`](docs/TRACTION.md) — go-to-market, KPIs we publish, partnership pipeline
 - [`docs/RESOLVERS.md`](docs/RESOLVERS.md) — run your own resolver
 - [`docs/SECURITY.md`](docs/SECURITY.md) — threat model, audit prep, bug bounty
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — testnet + mainnet deployment

@@ -2,14 +2,13 @@
 
 This document is the OverSync v2 threat model, audit preparation
 checklist, and bug bounty plan. It deliberately calls out the things
-we have NOT yet done, so any reader (especially the SCF #41 panel) can
-verify each claim.
+we have NOT yet done, so any reader can verify each claim.
 
 ## Status
 
 | Asset | Audit status | Notes |
 |---|---|---|
-| `soroban/contracts/htlc` | **Unaudited.** Has 10 unit tests. | Slated for independent audit pre-mainnet (SCF #41 Tranche 2). |
+| `soroban/contracts/htlc` | **Unaudited.** Has 10 unit tests. | Slated for independent audit pre-mainnet (Tranche 2 deliverable). |
 | `soroban/contracts/resolver-registry` | **Unaudited.** | Same plan as above. |
 | `contracts/v2/HTLCEscrow.sol` | **Unaudited.** 15 Hardhat tests + slither lint in CI. | Audit prep includes Foundry fuzz + invariant suite (Tranche 1 deliverable). |
 | `contracts/v2/ResolverRegistry.sol` | **Unaudited.** 6 Hardhat tests. | Owner role intended for multisig before mainnet. |

@@ -18,7 +18,7 @@ conditions is satisfied:
 
 No address — including the contract admin — can spend locked funds
 without satisfying one of those conditions. This is the property that
-SCF #40 found missing in the v1 design.
+v1 review feedback identified as missing in the legacy design.
 
 ## Toolchain
 

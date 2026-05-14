@@ -7,6 +7,8 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '')
   
+  const isProduction = mode === 'production';
+
   return {
     plugins: [react()],
     resolve: {
@@ -20,9 +22,21 @@ export default defineConfig(({ mode }) => {
       open: false,
       cors: true,
     },
+    // Strip all console.* calls and debugger statements from production
+    // bundles. Local development still logs normally. This avoids leaking
+    // wallet addresses, order payloads, balances and other runtime state
+    // through devtools when users hit the public deployment.
+    esbuild: isProduction
+      ? {
+          drop: ['console', 'debugger'],
+          legalComments: 'none',
+        }
+      : {},
     build: {
       outDir: 'dist',
-      sourcemap: true,
+      // Disable inline source maps in production to avoid handing reviewers
+      // a fully reconstructable source tree from the public bundle.
+      sourcemap: isProduction ? false : true,
       rollupOptions: {
         output: {
           manualChunks: {

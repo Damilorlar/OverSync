@@ -1,8 +1,8 @@
 # OverSync v2 — Trust Model
 
-This document is the direct answer to the SCF #40 panel's primary
-concern: *"OverSync currently relies on a single relayer; that's a
-single point of failure."*
+This document is the direct answer to the most common reviewer
+concern raised against v1: *"OverSync currently relies on a single
+relayer; that's a single point of failure."*
 
 ## Core invariant
 
