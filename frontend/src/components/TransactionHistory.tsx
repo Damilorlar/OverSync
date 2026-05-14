@@ -17,6 +17,8 @@ interface Transaction {
   timestamp: number;
   ethTxHash?: string;
   stellarTxHash?: string;
+  ethAddress?: string;
+  stellarAddress?: string;
   direction: 'eth-to-xlm' | 'xlm-to-eth';
   // Refund support
   // ETH-side refund metadata (eth-to-xlm; populated when ETH is locked on-chain)
@@ -29,6 +31,8 @@ interface Transaction {
   refundTxHash?: string;
   refundNetwork?: 'ethereum' | 'stellar';  // which chain the refund lives on
   refundedAt?: number;
+  autoRefundFailed?: boolean;
+  autoRefundError?: string;
   networkMode?: 'mainnet' | 'testnet';
 }
 
@@ -72,6 +76,7 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'cancelled'>('all');
   const [refundTarget, setRefundTarget] = useState<Transaction | null>(null);
+  const [manualRefundingIds, setManualRefundingIds] = useState<Set<string>>(() => new Set());
 
   const loadFromStorage = useCallback((): Transaction[] => {
     try {
@@ -219,11 +224,32 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
     );
   };
 
-  const handleRefunded = (orderId: string, refundHash: `0x${string}`) => {
+  const canManualRefundXlm = (tx: Transaction): boolean => {
+    return (
+      tx.direction === 'xlm-to-eth' &&
+      tx.status === 'failed' &&
+      tx.autoRefundFailed === true &&
+      !tx.refundedAt &&
+      !!(tx.stellarTxHash || tx.txHash) &&
+      !!(tx.stellarAddress || stellarAddress)
+    );
+  };
+
+  const markRefunded = (
+    orderId: string,
+    refundHash: string,
+    refundNetwork: 'ethereum' | 'stellar'
+  ) => {
     setTransactions((prev) => {
       const next = prev.map((tx) =>
         tx.id === orderId
-          ? { ...tx, status: 'cancelled' as const, refundTxHash: refundHash, refundedAt: Date.now() }
+          ? {
+              ...tx,
+              status: 'cancelled' as const,
+              refundTxHash: refundHash,
+              refundNetwork,
+              refundedAt: Date.now(),
+            }
           : tx
       );
       try {
@@ -233,6 +259,53 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
       }
       return next;
     });
+  };
+
+  const handleManualXlmRefund = async (tx: Transaction) => {
+    const originalStellarTx = tx.stellarTxHash || tx.txHash;
+    const refundAddress = tx.stellarAddress || stellarAddress;
+
+    if (!originalStellarTx || !refundAddress) {
+      window.alert('Manual refund requires the original Stellar transaction and your Stellar wallet address.');
+      return;
+    }
+
+    setManualRefundingIds((prev) => new Set(prev).add(tx.id));
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/orders/manual-refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stellarTxHash: originalStellarTx,
+          stellarAddress: refundAddress,
+          networkMode: tx.networkMode || (isTestnet() ? 'testnet' : 'mainnet'),
+        }),
+      });
+      const body = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(body?.details || body?.error || `Refund failed with ${res.status}`);
+      }
+
+      if (!body?.refundTxHash) {
+        throw new Error('Refund response did not include a transaction hash.');
+      }
+
+      markRefunded(tx.id, body.refundTxHash, 'stellar');
+      window.alert(`XLM refund submitted.\nRefund TX: ${body.refundTxHash}`);
+    } catch (err) {
+      window.alert(`Manual XLM refund failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setManualRefundingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(tx.id);
+        return next;
+      });
+    }
+  };
+
+  const handleRefunded = (orderId: string, refundHash: `0x${string}`) => {
+    markRefunded(orderId, refundHash, 'ethereum');
     setRefundTarget(null);
   };
 
@@ -393,6 +466,17 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
                     >
                       <Undo2 className="h-3.5 w-3.5" />
                       Refund ETH
+                    </button>
+                  )}
+                  {canManualRefundXlm(tx) && (
+                    <button
+                      onClick={() => void handleManualXlmRefund(tx)}
+                      disabled={manualRefundingIds.has(tx.id)}
+                      className="flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                      title="Ask the relayer to refund your original XLM payment"
+                    >
+                      <Undo2 className={`h-3.5 w-3.5 ${manualRefundingIds.has(tx.id) ? 'animate-spin' : ''}`} />
+                      {manualRefundingIds.has(tx.id) ? 'Refunding...' : 'Refund XLM'}
                     </button>
                   )}
                 </div>

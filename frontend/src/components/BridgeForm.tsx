@@ -86,6 +86,8 @@ const saveTransactionToHistory = (transaction: {
       toToken: transaction.direction === 'eth-to-xlm' ? 'XLM' : 'ETH',
       amount: transaction.amount,
       estimatedAmount: transaction.estimatedAmount,
+      ethAddress: transaction.ethAddress,
+      stellarAddress: transaction.stellarAddress,
       status: transaction.status || 'pending',
       timestamp: Date.now(),
       ethTxHash: transaction.ethTxHash,
@@ -1043,7 +1045,10 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
                 // Refund failed or not attempted - inform user with manual refund instructions
                 console.error('❌ Automatic refund failed:', parsedError?.refund);
                 
-                updateTransactionStatus(result.orderId, 'failed');
+                updateTransactionStatus(result.orderId, 'failed', {
+                  autoRefundFailed: parsedError?.refund?.status === 'failed',
+                  autoRefundError: parsedError?.refund?.error,
+                });
                 
                 setStatusMessage('Failed ❌');
                 setIsSubmitting(false);
