@@ -45,10 +45,34 @@ interface OrderCreatedEvent {
 /**
  * Ethereum Event Listener for HTLCBridge contract
  */
+/**
+ * How often we ask the RPC for new blocks. Sepolia produces a block
+ * roughly every 12s; 5s polling means we never lag more than one
+ * block behind reality while keeping RPC pressure low.
+ */
+const POLL_INTERVAL_MS = 5_000;
+
+/**
+ * Hard cap on the size of a single `getLogs` window. Public RPCs
+ * reject very wide ranges; if the relayer was offline for a long
+ * time we walk forward in chunks of this size instead of one giant
+ * query.
+ */
+const MAX_BLOCK_WINDOW = 500;
+
 export class EthereumEventListener {
   private provider?: ethers.JsonRpcProvider;
   private contract?: Contract;
   private isListening: boolean = false;
+  /**
+   * Cursor for the block-polling loop. We never re-scan blocks at or
+   * below this number, which makes the loop crash-safe across ticks
+   * even if individual `queryFilter` calls fail.
+   */
+  private lastProcessedBlock: number = 0;
+  private pollHandle: NodeJS.Timeout | null = null;
+  /** Re-entrancy guard so a slow poll doesn't overlap the next tick. */
+  private isPolling: boolean = false;
 
   constructor() {
     // Lazy initialization - will be done in startListening()
@@ -104,7 +128,22 @@ export class EthereumEventListener {
       if (RELAYER_CONFIG.enableMockMode) {
         console.log('🧪 Mock mode: Simulating event listener (no real blockchain connection)');
       } else {
-        this.contract!.on('OrderCreated', this.handleOrderCreatedEvent.bind(this));
+        // Start from the current head — we only care about NEW orders,
+        // not history. Historical orders are surfaced via /api/orders.
+        this.lastProcessedBlock = await this.provider!.getBlockNumber();
+        console.log(`📦 Polling from block ${this.lastProcessedBlock} forward (every ${POLL_INTERVAL_MS / 1000}s)`);
+
+        // Block-by-block polling instead of `contract.on(...)`. The
+        // `on` path uses `eth_newFilter` / `eth_getFilterChanges`,
+        // which load-balanced public RPCs (PublicNode, etc.) do not
+        // track reliably — the filter id is unknown to whichever node
+        // serves the next poll, producing the `filter not found`
+        // errors and silently dropping events. `queryFilter` is
+        // stateless on the RPC side: every tick we just ask for
+        // `getLogs(fromBlock, toBlock)`, which any node can answer.
+        this.pollHandle = setInterval(() => {
+          void this.pollEvents();
+        }, POLL_INTERVAL_MS);
       }
 
       this.isListening = true;
@@ -127,13 +166,60 @@ export class EthereumEventListener {
     }
 
     try {
-      if (!RELAYER_CONFIG.enableMockMode) {
-        this.contract?.removeAllListeners('OrderCreated');
+      if (this.pollHandle) {
+        clearInterval(this.pollHandle);
+        this.pollHandle = null;
       }
       this.isListening = false;
       console.log('🛑 Ethereum event listener stopped');
     } catch (error) {
       console.error('❌ Error stopping event listener:', error);
+    }
+  }
+
+  /**
+   * Poll for new OrderCreated events. Designed to be safe across:
+   *  - transient RPC failures (we keep the cursor; retry next tick)
+   *  - long offline windows (we walk forward MAX_BLOCK_WINDOW at a time)
+   *  - re-entrancy (a slow getLogs won't pile up on the next interval)
+   */
+  private async pollEvents(): Promise<void> {
+    if (this.isPolling || !this.contract || !this.provider) return;
+    this.isPolling = true;
+    try {
+      const head = await this.provider.getBlockNumber();
+      if (head <= this.lastProcessedBlock) return;
+
+      const fromBlock = this.lastProcessedBlock + 1;
+      const toBlock = Math.min(head, fromBlock + MAX_BLOCK_WINDOW - 1);
+
+      const filter = this.contract.filters.OrderCreated();
+      const events = await this.contract.queryFilter(filter, fromBlock, toBlock);
+
+      for (const ev of events) {
+        // `queryFilter` returns plain `Log` objects unless the ABI
+        // matches, in which case ethers gives us `EventLog` with
+        // decoded `args`. Filter to the typed case so we don't NPE
+        // on raw logs (e.g. from a contract that emits a colliding
+        // anonymous event).
+        if (!('args' in ev) || !ev.args) continue;
+        const args = ev.args as unknown as [
+          bigint, string, string, bigint, string, bigint, bigint, boolean
+        ];
+        await this.handleOrderCreatedEvent(
+          args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7],
+          ev as EventLog
+        );
+      }
+
+      this.lastProcessedBlock = toBlock;
+    } catch (err: any) {
+      // Don't advance the cursor — we'll retry the same window next
+      // tick. Public RPCs occasionally return 429s or transient
+      // upstream errors; logging once per failure is enough.
+      console.warn('[eth-listener] poll failed, will retry next tick:', err?.shortMessage ?? err?.message ?? err);
+    } finally {
+      this.isPolling = false;
     }
   }
 

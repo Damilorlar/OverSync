@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { ethers } from 'ethers';
 import { startRefundWatchdog } from './refund-watchdog.js';
+import { startContractEventPoller, type ContractEventBinding } from './contract-event-poller.js';
 
 // Load environment variables from root directory
 config({ path: resolve(process.cwd(), '../.env') });
@@ -2507,11 +2508,19 @@ const activeOrders = new Map();
     }
     
     // Dinamik event listeners - Mainnet vs Testnet
+    //
+    // Collected into `escrowFactoryEventBindings` instead of being
+    // registered via `contract.on(...)`. Public RPCs (PublicNode, Ankr)
+    // do not keep `eth_newFilter` state per upstream node, so the
+    // built-in `.on` polling produces `filter not found` errors and
+    // drops events. We hand the bindings to `startContractEventPoller`
+    // below, which drives a single `queryFilter` poll loop instead.
     const isMainnetContract = DEFAULT_NETWORK_MODE === 'mainnet';
-    
+    const escrowFactoryEventBindings: ContractEventBinding[] = [];
+
     if (isMainnetContract) {
       // MAINNET: Gerçek 1inch events
-      escrowFactoryContract.on('SrcEscrowCreated', async (srcImmutables, dstImmutablesComplement, event) => {
+      escrowFactoryEventBindings.push({ eventName: 'SrcEscrowCreated', handler: async (srcImmutables, dstImmutablesComplement, event) => {
         console.log('🏭 MAINNET SrcEscrowCreated Event:', {
           orderHash: srcImmutables.orderHash,
           hashlock: srcImmutables.hashlock,
@@ -2530,15 +2539,15 @@ const activeOrders = new Map();
             break;
           }
         }
-      });
-      
-      escrowFactoryContract.on('DstEscrowCreated', async (escrowAddress, hashlock, taker, event) => {
+      }});
+
+      escrowFactoryEventBindings.push({ eventName: 'DstEscrowCreated', handler: async (escrowAddress, hashlock, taker, event) => {
         console.log('🏭 MAINNET DstEscrowCreated Event:', {
           escrowAddress,
           hashlock,
           taker: taker.toString()
         });
-        
+
         // Find related order and update status
         for (const [orderId, orderData] of activeOrders.entries()) {
           if (orderData.hashLock === hashlock) {
@@ -2548,10 +2557,10 @@ const activeOrders = new Map();
             break;
           }
         }
-      });
+      }});
     } else {
       // TESTNET: Bizim custom events
-      escrowFactoryContract.on('EscrowCreated', async (escrowId, escrowAddress, resolver, token, amount, hashLock, timelock, safetyDeposit, chainId, event) => {
+      escrowFactoryEventBindings.push({ eventName: 'EscrowCreated', handler: async (escrowId, escrowAddress, resolver, token, amount, hashLock, timelock, safetyDeposit, chainId, event) => {
         console.log('🏭 TESTNET EscrowCreated Event:', {
           escrowId: escrowId.toString(),
           escrowAddress,
@@ -2562,7 +2571,7 @@ const activeOrders = new Map();
           chainId: chainId.toString(),
           safetyDeposit: ethers.formatEther(safetyDeposit)
         });
-        
+
         // Find related order and update status
         for (const [orderId, orderData] of activeOrders.entries()) {
           if (orderData.hashLock === hashLock) {
@@ -2573,17 +2582,17 @@ const activeOrders = new Map();
             break;
           }
         }
-      });
-      
+      }});
+
       // Testnet EscrowFunded event
-      escrowFactoryContract.on('EscrowFunded', async (escrowId, funder, amount, safetyDeposit, event) => {
+      escrowFactoryEventBindings.push({ eventName: 'EscrowFunded', handler: async (escrowId, funder, amount, safetyDeposit, event) => {
         console.log('💰 TESTNET EscrowFunded Event:', {
           escrowId: escrowId.toString(),
           funder,
           amount: ethers.formatEther(amount),
           safetyDeposit: ethers.formatEther(safetyDeposit)
         });
-        
+
         // Update related order status
         for (const [orderId, orderData] of activeOrders.entries()) {
           if (orderData.escrowId === escrowId.toString()) {
@@ -2592,10 +2601,18 @@ const activeOrders = new Map();
             break;
           }
         }
-      });
+      }});
     }
 
-    
+    if (escrowFactoryEventBindings.length > 0) {
+      await startContractEventPoller(
+        escrowFactoryContract,
+        provider,
+        escrowFactoryEventBindings,
+        { label: 'escrow-factory', intervalMs: 5_000 }
+      );
+    }
+
     console.log('✅ EscrowFactory event listeners set up successfully');
   } catch (error) {
     console.error('❌ Failed to setup EscrowFactory events:', error);
