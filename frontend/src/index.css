@@ -30,19 +30,74 @@ html, body, #root {
 
 /* Force dark mode globally */
 html {
-  @apply bg-slate-900 text-white;
+  @apply bg-[#050b0d] text-white;
 }
 
 body {
-  @apply bg-slate-900 text-white;
+  @apply bg-[#050b0d] text-white;
 }
 
 body {
   min-height: 100vh;
-  /* Updated background with soft purple-blue-pink gradient */
-  background: radial-gradient(ellipse at center, #1A1E2E 0%, #151A28 50%);
+  background:
+    linear-gradient(135deg, rgba(20, 184, 166, 0.14) 0%, transparent 28%),
+    linear-gradient(225deg, rgba(244, 114, 182, 0.12) 0%, transparent 30%),
+    linear-gradient(315deg, rgba(245, 158, 11, 0.09) 0%, transparent 24%),
+    #050b0d;
   background-attachment: fixed;
   background-size: cover;
+}
+
+body::selection {
+  background: rgba(34, 211, 238, 0.35);
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+}
+
+.app-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -20;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 0 18%, rgba(45, 212, 191, 0.18) 24%, transparent 36%),
+    linear-gradient(68deg, transparent 0 46%, rgba(251, 191, 36, 0.09) 52%, transparent 64%),
+    linear-gradient(155deg, transparent 0 58%, rgba(236, 72, 153, 0.12) 64%, transparent 78%);
+  opacity: 0.72;
+  filter: saturate(1.08);
+}
+
+.background-depth {
+  opacity: 0.9;
+}
+
+.background-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.88), transparent 82%);
+}
+
+.background-scanline {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035) 0,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  opacity: 0.25;
 }
 
 /* Input number styling */
@@ -59,11 +114,11 @@ input[type=number] {
 
 /* Glass effect */
 .glass-effect {
-  background: rgba(13, 17, 28, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(8, 17, 19, 0.76);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
 }
 
 /* Updated flowing border effect with new colors */
@@ -171,26 +226,36 @@ input[type=number] {
 
 /* New custom classes for the updated design */
 .page-title-gradient {
-  background: linear-gradient(to right, #6C63FF, #3ABEFF, #FF9AF0);
+  background: linear-gradient(90deg, #67e8f9, #a7f3d0, #fbbf24, #f0abfc);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 600;
 }
 
+.hero-gradient {
+  background: linear-gradient(90deg, #67e8f9 0%, #a7f3d0 38%, #fbbf24 68%, #f0abfc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .swap-card-border {
   position: relative;
-  border-radius: 1.5rem;
-  box-shadow: 0 0 12px rgba(108, 99, 255, 0.15);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow:
+    0 24px 90px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(103, 232, 249, 0.04) inset;
 }
 
 .swap-card-border::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 1.5rem;
+  border-radius: 1.25rem;
   padding: 1px;
-  background: linear-gradient(90deg, #6C63FF, #3ABEFF);
+  background: linear-gradient(135deg, rgba(103, 232, 249, 0.42), rgba(167, 243, 208, 0.08), rgba(251, 191, 36, 0.22), rgba(244, 114, 182, 0.28));
   -webkit-mask: 
     linear-gradient(#fff 0 0) content-box, 
     linear-gradient(#fff 0 0);
@@ -203,23 +268,37 @@ input[type=number] {
 }
 
 .swap-card-bg {
-  background-color: rgba(20, 25, 40, 0.8);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(7, 18, 21, 0.86);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .button-hover-scale:hover {
-  transform: scale(1.05);
-  transition: transform 0.2s ease;
+  transform: translateY(-1px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 /* Network button styles */
+.network-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .network-mainnet {
-  background-color: rgba(58, 190, 255, 0.1);
-  color: #3ABEFF;
+  background-color: rgba(34, 211, 238, 0.11);
+  color: #a5f3fc;
+  border-color: rgba(103, 232, 249, 0.26);
 }
 
 .network-testnet {
-  background-color: rgba(255, 221, 87, 0.1);
-  color: #FFDD57;
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.28);
 }
 
 .network-connected {
@@ -230,4 +309,107 @@ input[type=number] {
 .network-button-hover:hover {
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 9999px;
-} 
+}
+
+.segmented-control {
+  display: inline-flex;
+  min-height: 44px;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.055);
+  padding: 0.25rem;
+  backdrop-filter: blur(18px);
+}
+
+.segmented-control button {
+  display: inline-flex;
+  min-width: 116px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.625rem 1rem;
+  color: rgb(203 213 225);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.segmented-control button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.segmented-control button.active {
+  color: #061013;
+  background: linear-gradient(90deg, #67e8f9, #a7f3d0);
+  box-shadow: 0 14px 34px rgba(34, 211, 238, 0.18);
+}
+
+.metric-tile {
+  display: grid;
+  min-height: 92px;
+  gap: 0.35rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.105);
+  background: rgba(255, 255, 255, 0.055);
+  padding: 1rem;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+.route-panel {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.028)),
+    rgba(7, 18, 21, 0.72);
+  padding: 1.25rem;
+  backdrop-filter: blur(22px);
+}
+
+.chain-node {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.095);
+  background: rgba(255, 255, 255, 0.055);
+  color: white;
+  font-weight: 700;
+}
+
+.token-input-panel {
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(9, 24, 27, 0.9);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.18) inset;
+}
+
+.token-input-panel:focus-within {
+  border-color: rgba(103, 232, 249, 0.36);
+  box-shadow:
+    0 16px 44px rgba(0, 0, 0, 0.18) inset,
+    0 0 0 3px rgba(34, 211, 238, 0.08);
+}
+
+.surface-panel {
+  border: 1px solid rgba(255, 255, 255, 0.095);
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(18px);
+}
+
+@media (max-width: 640px) {
+  .segmented-control {
+    width: 100%;
+  }
+
+  .segmented-control button {
+    min-width: 0;
+    flex: 1;
+  }
+}

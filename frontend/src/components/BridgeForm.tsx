@@ -9,6 +9,7 @@ import {
 } from '@stellar/stellar-sdk';
 import { isTestnet, getCurrentNetwork } from '../config/networks';
 import { parseHtlcReceipt } from '../lib/parseHtlcReceipt';
+import { ArrowDownUp, CheckCircle2, Loader2, RefreshCw, Settings2 } from 'lucide-react';
 
 // Web3 imports for contract interaction
 declare global {
@@ -565,7 +566,7 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
           if (!transactionData.to || !transactionData.value) {
             throw new Error('Invalid transaction parameters from relayer');
           }
-          
+
           // Log transaction details for debugging
           console.log('🔍 Transaction details (CONTRACT INTERACTION):', {
             ...transactionData,
@@ -1123,33 +1124,31 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
   const walletsConnected = ethAddress && stellarAddress;
 
   return (
-    <div className="w-full max-w-lg rounded-3xl p-4 swap-card-bg swap-card-border">
+    <div className="w-full rounded-[1.25rem] p-4 swap-card-bg swap-card-border md:p-5 lg:p-6">
       {orderCreated ? (
-        <div className="text-center space-y-6">
-          <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+        <div className="space-y-6 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-300/25 bg-emerald-300/12 shadow-[0_18px_48px_rgba(16,185,129,0.18)]">
+            <CheckCircle2 className="h-8 w-8 text-emerald-200" />
           </div>
           
           <div>
-            <h3 className="text-xl font-bold text-white mb-2">Order Created!</h3>
-            <p className="text-gray-300">
+            <h3 className="mb-2 text-2xl font-semibold tracking-tight text-white">Order Created</h3>
+            <p className="text-slate-300">
               Your cross-chain order has been successfully created and is now processing.
             </p>
           </div>
           
-          <div className="bg-[#1a212f] rounded-xl p-4 text-left border border-white/5 swap-card-bg">
+          <div className="surface-panel rounded-2xl p-4 text-left">
             <div className="mb-2">
-              <span className="text-sm text-gray-400">Order ID:</span>
+              <span className="text-sm text-slate-400">Order ID:</span>
               <p className="font-mono text-white text-sm break-all">{orderId}</p>
             </div>
             <div className="mb-2">
-              <span className="text-sm text-gray-400">From:</span>
+              <span className="text-sm text-slate-400">From:</span>
               <p className="text-white">{amount} {fromToken.symbol}</p>
             </div>
             <div>
-              <span className="text-sm text-gray-400">To:</span>
+              <span className="text-sm text-slate-400">To:</span>
               <p className="text-white">{estimatedAmount} {toToken.symbol}</p>
             </div>
           </div>
@@ -1157,209 +1156,194 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
           <div className="pt-4">
             <button
               onClick={handleReset}
-              className="w-full bg-gradient-to-r from-[#6C63FF] to-[#3ABEFF] hover:from-[#5A52E8] hover:to-[#2A9FE8] text-white py-3 rounded-xl font-semibold transition-colors button-hover-scale"
+              className="button-hover-scale w-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-200 py-3 font-semibold text-[#061013] shadow-[0_18px_44px_rgba(45,212,191,0.18)] transition"
             >
-              New Swap
+              New Bridge
             </button>
           </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-medium text-white">Swap</h2>
+          <div className="mb-1 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Bridge console</p>
+            </div>
             <div className="flex items-center gap-2">
-              <button type="button" className="p-1.5 rounded-md hover:bg-white/5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+              <button type="button" className="rounded-full border border-white/10 bg-white/[0.045] p-2 text-slate-400 transition hover:border-cyan-200/25 hover:bg-white/[0.075] hover:text-cyan-100" title="Refresh quote">
+                <RefreshCw className="h-4 w-4" />
               </button>
-              <button type="button" className="p-1.5 rounded-md hover:bg-white/5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+              <button type="button" className="rounded-full border border-white/10 bg-white/[0.045] p-2 text-slate-400 transition hover:border-cyan-200/25 hover:bg-white/[0.075] hover:text-cyan-100" title="Bridge settings">
+                <Settings2 className="h-4 w-4" />
               </button>
             </div>
           </div>
-          
+
           {/* From Section */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">You pay</label>
-            <div className="bg-[#1a212f] rounded-xl p-3 border border-white/5 input-container swap-card-bg">
-              <div className="flex items-center justify-between mb-2">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">You pay</label>
+            <div className="token-input-panel rounded-2xl p-3 input-container">
+              <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <img 
-                    src={fromToken.logo} 
-                    alt={fromToken.symbol} 
-                    className="w-6 h-6"
+                  <img
+                    src={fromToken.logo}
+                    alt={fromToken.symbol}
+                    className="h-7 w-7 rounded-full"
                   />
                   <div>
                     <span className="font-medium text-white">{fromToken.symbol}</span>
-                    <span className="text-xs text-gray-400 ml-2">on {fromToken.chain}</span>
+                    <span className="ml-2 text-xs text-slate-400">on {fromToken.chain}</span>
                   </div>
                 </div>
               </div>
-              
-              <div className="relative">
-                <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={amount}
                   onChange={(e) => {
-                    console.log('⌨️ Input changed:', { 
-                      oldValue: amount, 
+                    console.log('⌨️ Input changed:', {
+                      oldValue: amount,
                       newValue: e.target.value,
                       eventType: 'manual_input'
                     });
                     setAmount(e.target.value);
                   }}
                   placeholder="0.0"
-                    className="flex-1 bg-transparent text-xl font-medium text-white outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-2xl font-semibold tracking-tight text-white outline-none placeholder:text-slate-600"
                 />
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newAmount = (parseFloat(balance) * 0.5).toFixed(4);
-                        console.log('🔘 50% Button clicked:', { balance, newAmount });
-                        setAmount(newAmount);
-                      }}
-                      className="px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition-colors"
-                    >
-                      50%
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        console.log('🔘 MAX Button clicked:', { balance });
-                        setAmount(balance);
-                      }}
-                      className="px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition-colors"
-                    >
-                      Max
-                    </button>
-                  </div>
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newAmount = (parseFloat(balance) * 0.5).toFixed(4);
+                      console.log('🔘 50% Button clicked:', { balance, newAmount });
+                      setAmount(newAmount);
+                    }}
+                    className="rounded-full border border-cyan-300/15 px-2.5 py-1 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-300/10"
+                  >
+                    50%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      console.log('🔘 MAX Button clicked:', { balance });
+                      setAmount(balance);
+                    }}
+                    className="rounded-full border border-cyan-300/15 px-2.5 py-1 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-300/10"
+                  >
+                    Max
+                  </button>
                 </div>
-                <div className="flex justify-between items-center mt-1">
-                  <div className="text-sm text-gray-400">
-                  $0.00
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Balance: {balance} {fromToken.symbol}
-                  </div>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="text-sm text-slate-500">$0.00</div>
+                <div className="truncate text-sm text-slate-400">
+                  Balance: {balance} {fromToken.symbol}
                 </div>
               </div>
             </div>
           </div>
-          
-          {/* Swap Direction Button */}
-          <div className="flex justify-center -my-2 z-10 relative">
+
+          {/* Direction Button */}
+          <div className="relative z-10 -my-2 flex justify-center">
             <button
               type="button"
               onClick={handleSwapDirection}
-              className="bg-[#1a212f] p-2 rounded-full hover:bg-[#252b3b] transition-colors border border-white/5 shadow-lg"
+              className="button-hover-scale rounded-full border border-cyan-200/20 bg-[#081519] p-2.5 text-cyan-100 shadow-[0_14px_36px_rgba(0,0,0,0.35)] transition hover:border-cyan-200/40 hover:bg-[#0d2025]"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
+              <ArrowDownUp className="h-5 w-5" />
             </button>
           </div>
-          
+
           {/* To Section */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">You receive</label>
-            <div className="bg-[#1a212f] rounded-xl p-3 border border-white/5 input-container swap-card-bg">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={toToken.logo} 
-                    alt={toToken.symbol} 
-                    className="w-6 h-6"
-                  />
-                  <div>
-                    <span className="font-medium text-white">{toToken.symbol}</span>
-                    <span className="text-xs text-gray-400 ml-2">on {toToken.chain}</span>
-                  </div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">You receive</label>
+            <div className="token-input-panel rounded-2xl p-3 input-container">
+              <div className="mb-2 flex items-center gap-2">
+                <img
+                  src={toToken.logo}
+                  alt={toToken.symbol}
+                  className="h-7 w-7 rounded-full"
+                />
+                <div>
+                  <span className="font-medium text-white">{toToken.symbol}</span>
+                  <span className="ml-2 text-xs text-slate-400">on {toToken.chain}</span>
                 </div>
               </div>
-              
-              <div className="relative">
-                <div className="text-xl font-medium text-white">
-                  {estimatedAmount || '0.0'}
-                </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  $0.00
-                </div>
+
+              <div className="min-h-[2rem] text-2xl font-semibold tracking-tight text-white">
+                {estimatedAmount || '0.0'}
               </div>
+              <div className="mt-1 text-xs text-slate-500">$0.00</div>
             </div>
           </div>
           
           {/* Fee and Time Estimate */}
-          <div className="flex justify-between items-center text-xs text-gray-400 px-1">
+          <div className="flex items-center justify-between px-1 text-xs text-slate-400">
             <div>Fee: $0.00</div>
             <div>~1 min</div>
           </div>
-          
+
           {/* Exchange Rate Info */}
-          <div className="bg-[#3ABEFF]/10 border border-[#3ABEFF]/20 rounded-xl p-2">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1.5 text-blue-400 font-medium text-xs">
-                <span>Exchange rate</span>
-                {priceSource && priceSource !== 'fallback' && (
-                  <span
-                    className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-emerald-300"
-                    title={priceSource === 'cache' ? 'Served from 60s server-side cache' : 'Fresh from CoinGecko'}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    live
-                  </span>
-                )}
-                {priceSource === 'fallback' && (
-                  <span
-                    className="text-[10px] uppercase tracking-wide text-amber-300"
-                    title="The relayer price feed is unreachable; this is a hardcoded estimate."
-                  >
-                    fallback
-                  </span>
+          <div className="surface-panel rounded-2xl p-2.5">
+              <div className="mb-1.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-200">
+                  <span>Exchange rate</span>
+                  {priceSource && priceSource !== 'fallback' && (
+                    <span
+                      className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-emerald-300"
+                      title={priceSource === 'cache' ? 'Served from 60s server-side cache' : 'Fresh from CoinGecko'}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      live
+                    </span>
+                  )}
+                  {priceSource === 'fallback' && (
+                    <span
+                      className="text-[10px] uppercase tracking-wide text-amber-300"
+                      title="The relayer price feed is unreachable; this is a hardcoded estimate."
+                    >
+                      fallback
+                    </span>
+                  )}
+                </div>
+                {isLoadingRate ? (
+                  <div className="flex items-center gap-1 text-xs text-cyan-200">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Updating...
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400">
+                    {rateLastUpdated && `Updated ${rateLastUpdated.toLocaleTimeString()}`}
+                  </div>
                 )}
               </div>
-              {isLoadingRate ? (
-                <div className="flex items-center gap-1 text-blue-400 text-xs">
-                  <div className="animate-spin w-3 h-3 border border-blue-400 border-t-transparent rounded-full"></div>
-                  Updating...
-                </div>
-              ) : (
-                <div className="text-blue-300 text-xs">
-                  {rateLastUpdated && `Updated ${rateLastUpdated.toLocaleTimeString()}`}
+              <div className="text-xs text-white">
+                1 ETH = {exchangeRate.toLocaleString(undefined, { maximumFractionDigits: 2 })} XLM
+                <span className="ml-1.5 text-slate-500">
+                  · 1 XLM = {(1 / exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 8 })} ETH
+                </span>
+              </div>
+              {ethUsdPrice !== null && xlmUsdPrice !== null && (
+                <div className="mt-1 text-[11px] text-slate-400">
+                  ETH ${ethUsdPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  <span className="mx-1.5 text-slate-600">·</span>
+                  XLM ${xlmUsdPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                  <span className="mx-1.5 text-slate-600">·</span>
+                  via relayer (CoinGecko, 15s SWR)
                 </div>
               )}
-            </div>
-            <div className="text-white text-xs">
-              1 ETH = {exchangeRate.toLocaleString(undefined, { maximumFractionDigits: 2 })} XLM
-              <span className="text-gray-500 ml-1.5">
-                · 1 XLM = {(1 / exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 8 })} ETH
-              </span>
-            </div>
-            {ethUsdPrice !== null && xlmUsdPrice !== null && (
-              <div className="text-gray-400 text-[11px] mt-1">
-                ETH ${ethUsdPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                <span className="mx-1.5 text-gray-600">·</span>
-                XLM ${xlmUsdPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-                <span className="mx-1.5 text-gray-600">·</span>
-                via relayer (CoinGecko, 15s SWR)
-              </div>
-            )}
-            {priceSource === 'fallback' && (
-              <div className="text-amber-300/80 text-[11px] mt-1">
-                Live price feed unreachable. Final swap amount will use the relayer's price at execution time and may differ.
-              </div>
-            )}
+              {priceSource === 'fallback' && (
+                <div className="text-amber-300/80 text-[11px] mt-1">
+                  Live price feed unreachable. Final swap amount will use the relayer's price at execution time and may differ.
+                </div>
+              )}
           </div>
           
           {/* Status Message */}
           {statusMessage && (
-            <div className="bg-[#3ABEFF]/10 border border-[#3ABEFF]/20 rounded-xl p-2 text-center">
-              <div className="text-[#3ABEFF] font-medium">{statusMessage}</div>
+            <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-center">
+              <div className="font-medium text-cyan-100">{statusMessage}</div>
             </div>
           )}
           
@@ -1367,21 +1351,21 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
           <button
             type="submit"
             disabled={isSubmitting || !amount || !walletsConnected}
-            className={`w-full py-3 rounded-xl font-semibold transition-all button-hover-scale ${
-              walletsConnected 
-                ? 'bg-gradient-to-r from-[#6C63FF] to-[#3ABEFF] hover:from-[#5A52E8] hover:to-[#2A9FE8] hover:shadow-lg hover:shadow-[#6C63FF]/20 text-white' 
-                : 'bg-gray-600/50 text-gray-400 cursor-not-allowed border border-white/5'
+            className={`button-hover-scale w-full rounded-full py-3.5 font-semibold transition-all ${
+              walletsConnected
+                ? 'bg-gradient-to-r from-cyan-300 to-emerald-200 text-[#061013] shadow-[0_18px_44px_rgba(45,212,191,0.18)] hover:shadow-[0_20px_54px_rgba(45,212,191,0.24)]'
+                : 'cursor-not-allowed border border-white/5 bg-slate-700/45 text-slate-400'
             }`}
           >
-            {!walletsConnected 
-              ? 'Connect Wallet' 
-              : isSubmitting 
-                ? statusMessage || 'Processing...' 
-                : 'Swap'
+            {!walletsConnected
+              ? 'Connect Wallet'
+              : isSubmitting
+                ? statusMessage || 'Processing...'
+                : 'Bridge'
             }
           </button>
         </form>
       )}
     </div>
   );
-} 
+}

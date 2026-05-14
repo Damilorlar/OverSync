@@ -233,25 +233,26 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
   };
 
   return (
-    <div className="bg-[#131823] rounded-2xl p-6 border border-white/10">
-      <div className="flex items-center justify-between mb-6">
+    <div className="surface-panel rounded-[1.25rem] p-4 shadow-[0_24px_90px_rgba(0,0,0,0.36)] md:p-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Transaction History</h2>
-          <p className="text-gray-400 text-sm">
+          <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Ledger</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">Transaction History</h2>
+          <p className="mt-2 text-sm text-slate-400">
             Track your cross-chain swaps between Ethereum and Stellar networks
           </p>
         </div>
         <button
           onClick={refreshFromCoordinator}
           disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-[#3ABEFF]/20 hover:bg-[#3ABEFF]/30 text-[#3ABEFF] rounded-lg transition-colors button-hover-scale"
+          className="button-hover-scale flex items-center justify-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/15 disabled:opacity-60"
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
         {[
           { key: 'all', label: 'All' },
           { key: 'pending', label: 'Pending' },
@@ -261,10 +262,10 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
           <button
             key={key}
             onClick={() => setFilter(key as any)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
               filter === key
-                ? 'bg-gradient-to-r from-[#6C63FF] to-[#3ABEFF] text-white'
-                : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-gradient-to-r from-cyan-300 to-emerald-200 text-[#061013]'
+                : 'border border-white/10 bg-white/[0.045] text-slate-400 hover:bg-white/[0.075] hover:text-white'
             }`}
           >
             {label} {key !== 'all' && `(${transactions.filter(tx => tx.status === key).length})`}
@@ -272,14 +273,14 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
         ))}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filteredTransactions.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Clock className="h-8 w-8 text-gray-400" />
+          <div className="rounded-2xl border border-white/10 bg-white/[0.035] py-12 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045]">
+              <Clock className="h-8 w-8 text-slate-400" />
             </div>
-            <p className="text-gray-400 text-lg">No transactions yet</p>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-lg text-slate-300">No transactions yet</p>
+            <p className="mt-1 text-sm text-slate-500">
               Your real cross-chain swaps will appear here after the first transaction
             </p>
           </div>
@@ -287,26 +288,26 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
           filteredTransactions.map((tx) => (
             <div
               key={tx.id}
-              className="bg-[#1a212f] rounded-lg p-4 border border-white/5 hover:border-white/10 transition-colors"
+              className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 transition hover:border-cyan-200/20 hover:bg-white/[0.065]"
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(tx.status)}`}>
+                  <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(tx.status)}`}>
                     {getStatusIcon(tx.status)}
                     <span className="capitalize">{tx.status}</span>
                   </div>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-slate-400">
                     {formatTime(tx.timestamp)}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {tx.ethTxHash && isRealHash(tx.ethTxHash) && (
                     <a
                       href={getEtherscanUrl(tx.ethTxHash)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-[11px] font-medium border border-white/5 transition-colors"
+                      className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-[11px] font-semibold text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
                       title="View on Etherscan"
                     >
                       <img src="/images/eth.png" alt="ETH" className="h-3.5 w-3.5" />
@@ -319,7 +320,7 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
                       href={getStellarExplorerUrl(tx.stellarTxHash)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-[11px] font-medium border border-white/5 transition-colors"
+                      className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-[11px] font-semibold text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
                       title="View on Stellar Expert"
                     >
                       <img src="/images/xlm.png" alt="XLM" className="h-3.5 w-3.5" />
@@ -331,33 +332,33 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
+                <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3">
+                  <div className="rounded-xl border border-white/10 bg-black/10 p-3 text-center">
                     <div className="text-white font-medium">
                       {tx.amount} {tx.fromToken}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-slate-400">
                       {tx.fromNetwork}
                     </div>
                   </div>
 
-                  <ArrowRight className="h-4 w-4 text-gray-400" />
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
 
-                  <div className="text-center">
+                  <div className="rounded-xl border border-white/10 bg-black/10 p-3 text-center">
                     <div className="text-white font-medium">
                       {tx.estimatedAmount} {tx.toToken}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-slate-400">
                       {tx.toNetwork}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between gap-2 flex-wrap">
-                <div className="text-xs text-gray-400">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
+                <div className="text-xs text-slate-400">
                   Transaction:
-                  <span className="text-gray-300 font-mono ml-1">
+                  <span className="ml-1 font-mono text-slate-300">
                     {tx.txHash.substring(0, 10)}...{tx.txHash.substring(tx.txHash.length - 8)}
                   </span>
                 </div>
@@ -367,7 +368,7 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
                       href={getRefundExplorerUrl(tx)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-xs font-semibold border border-emerald-400/30 transition-colors"
+                      className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
                       title={`Refund settled on ${getRefundNetworkLabel(tx)}. Click to view the refund transaction.`}
                     >
                       <Undo2 className="h-3.5 w-3.5" />
@@ -383,7 +384,7 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
                   {canRefund(tx) && (
                     <button
                       onClick={() => setRefundTarget(tx)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-semibold border border-amber-400/30 transition-colors"
+                      className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-500/25"
                       title="Refund your locked ETH from the HTLC contract once the timelock expires"
                     >
                       <Undo2 className="h-3.5 w-3.5" />

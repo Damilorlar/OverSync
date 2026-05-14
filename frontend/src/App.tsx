@@ -8,6 +8,18 @@ import { useFreighter } from './hooks/useFreighter'
 import { useNetworkMode } from './lib/useNetworkMode'
 import NetworkMismatchBanner from './components/NetworkMismatchBanner'
 import MainnetVersionBanner from './components/MainnetVersionBanner'
+import {
+  Activity,
+  ArrowRightLeft,
+  ChevronDown,
+  ExternalLink,
+  History,
+  LockKeyhole,
+  RadioTower,
+  ShieldCheck,
+  Wallet,
+  Zap,
+} from 'lucide-react'
 
 // Window objeleri için type definitions
 declare global {
@@ -153,37 +165,44 @@ function App() {
   const isWalletsConnected = ethAddress && stellarConnected;
   const hasAnyConnection = ethAddress || stellarConnected;
 
+  const connectionLabel = isWalletsConnected ? 'Connected' : hasAnyConnection ? 'Partial' : 'Connect Wallet';
+
   return (
-    <div className="min-h-screen text-white flex flex-col">
+    <div className="app-shell min-h-screen text-white flex flex-col">
       {/* Top Navigation */}
-      <nav className="w-full px-6 py-4 flex items-center justify-between border-b border-white/10 backdrop-blur-sm">
+      <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#071012]/70 px-4 py-3 backdrop-blur-2xl md:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <img 
             src="/images/oversync-logo.png" 
             alt="OverSync" 
-            className="w-12 h-12 rounded-lg"
+            className="h-11 w-11 rounded-xl border border-white/10 shadow-[0_0_28px_rgba(52,211,153,0.18)]"
           />
-          <span className="text-xl font-bold bg-gradient-to-r from-[#6C63FF] to-[#3ABEFF] bg-clip-text text-transparent">
-            OverSync
-          </span>
+          <div>
+            <span className="block text-lg font-semibold tracking-tight text-white">OverSync</span>
+            <span className="hidden text-xs uppercase tracking-[0.32em] text-emerald-200/60 sm:block">Fusion Rail</span>
+          </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="https://www.alchemy.com/faucets/ethereum-sepolia" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors">Faucet</a>
+        <div className="flex items-center gap-2 md:gap-3">
+          <nav className="hidden items-center gap-2 md:flex">
+            <a href="https://www.alchemy.com/faucets/ethereum-sepolia" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-300 transition hover:border-cyan-300/30 hover:bg-white/[0.08] hover:text-white">
+              Faucet
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
           </nav>
-          
+
           {/* Network Toggle Button */}
           <button
             onClick={toggleNetwork}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 network-button-hover ${
+            className={`network-pill px-3 py-2 text-sm font-semibold transition-all duration-200 md:px-4 ${
               currentNetwork === 'mainnet'
-                ? 'network-mainnet border border-[#3ABEFF]/30'
-                : 'network-testnet border border-[#FFDD57]/30'
+                ? 'network-mainnet'
+                : 'network-testnet'
             }`}
           >
             <div className={`w-2 h-2 rounded-full ${
-              currentNetwork === 'mainnet' ? 'bg-[#3ABEFF]' : 'bg-[#FFDD57]'
+              currentNetwork === 'mainnet' ? 'bg-cyan-300' : 'bg-amber-300'
             }`}></div>
             {currentNetwork === 'mainnet' ? 'Mainnet' : 'Testnet'}
           </button>
@@ -192,45 +211,46 @@ function App() {
           <div className="relative">
             <button 
               onClick={() => setShowWalletMenu(!showWalletMenu)}
-              className="bg-gradient-to-r from-[#6C63FF] to-[#3ABEFF] hover:from-[#5A52E8] hover:to-[#2A9FE8] text-white px-6 py-2.5 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 button-hover-scale"
+              className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-sm font-semibold text-white shadow-[0_12px_40px_rgba(34,211,238,0.12)] transition hover:border-cyan-200/40 hover:bg-cyan-300/15 md:px-5"
             >
+              <Wallet className="h-4 w-4" />
               {isWalletsConnected ? (
                 <>
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  Connected
+                  <span className="hidden sm:inline">{connectionLabel}</span>
                 </>
               ) : hasAnyConnection ? (
                 <>
                   <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                  Partial
+                  <span className="hidden sm:inline">{connectionLabel}</span>
                 </>
               ) : (
-                'Connect Wallet'
+                <span className="hidden sm:inline">{connectionLabel}</span>
               )}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="transition-transform duration-200" style={{ transform: showWalletMenu ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                <path d="M7 10l5 5 5-5z"/>
-              </svg>
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showWalletMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Wallet Dropdown Menu */}
             {showWalletMenu && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-slate-800/95 backdrop-blur-xl rounded-xl border border-white/20 shadow-2xl z-[100] p-4">
-                <h3 className="text-white font-semibold mb-4 text-center">Connect Wallets</h3>
+              <div className="absolute right-0 top-full z-[100] mt-3 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-white/15 bg-[#0b1518]/95 p-4 shadow-2xl shadow-black/50 backdrop-blur-2xl">
+                <h3 className="mb-4 text-center font-semibold text-white">Connect Wallets</h3>
                 
                 {(connectionError || stellarError) && (
-                  <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                  <div className="mb-4 rounded-xl border border-red-400/25 bg-red-500/15 p-3">
                     <p className="text-red-300 text-sm">{connectionError || stellarError}</p>
                   </div>
                 )}
 
                 {/* MetaMask */}
-                <div className="mb-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">🦊</span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-orange-300/20 bg-orange-400/15 text-orange-200">
+                        <Wallet className="h-4 w-4" />
+                      </span>
                       <div>
                         <div className="text-white font-medium">MetaMask</div>
-                        <div className="text-xs text-gray-400">Ethereum Network</div>
+                        <div className="text-xs text-slate-400">Ethereum Network</div>
                       </div>
                     </div>
                     
@@ -248,7 +268,7 @@ function App() {
                       <button
                         type="button"
                         onClick={connectMetaMask}
-                        className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 px-4 py-2 rounded-lg transition-colors text-sm"
+                        className="rounded-full border border-orange-300/20 bg-orange-400/15 px-4 py-2 text-sm text-orange-200 transition hover:bg-orange-400/25"
                         disabled={isConnecting}
                       >
                         {isConnecting ? 'Connecting...' : 'Connect'}
@@ -258,13 +278,15 @@ function App() {
                 </div>
 
                 {/* Freighter */}
-                <div className="mb-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">🚀</span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/15 text-cyan-100">
+                        <RadioTower className="h-4 w-4" />
+                      </span>
                       <div>
                         <div className="text-white font-medium">Freighter</div>
-                        <div className="text-xs text-gray-400">Stellar Network</div>
+                        <div className="text-xs text-slate-400">Stellar Network</div>
                       </div>
                     </div>
                     
@@ -282,7 +304,7 @@ function App() {
                       <button
                         type="button"
                         onClick={handleFreighterConnect}
-                        className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-4 py-2 rounded-lg transition-colors text-sm"
+                        className="rounded-full border border-cyan-300/20 bg-cyan-300/15 px-4 py-2 text-sm text-cyan-200 transition hover:bg-cyan-300/25"
                         disabled={stellarLoading}
                       >
                         {stellarLoading ? 'Connecting...' : 'Connect'}
@@ -295,7 +317,7 @@ function App() {
                 {hasAnyConnection && (
                   <button
                     onClick={disconnectWallets}
-                    className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 py-2 rounded-lg transition-colors text-sm border border-red-500/30"
+                    className="w-full rounded-full border border-red-400/30 bg-red-500/15 py-2 text-sm text-red-200 transition hover:bg-red-500/25"
                   >
                     Disconnect All
                   </button>
@@ -304,93 +326,120 @@ function App() {
             )}
           </div>
         </div>
+        </div>
       </nav>
 
       <NetworkMismatchBanner networkState={networkState} />
       <MainnetVersionBanner networkState={networkState} />
 
-      {/* Hero Section */}
-      <div className="text-center py-8 px-6">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">
-          <span className="page-title-gradient">
-            Cross-chain Swap
-          </span>
-        </h1>
-        <p className="text-lg text-gray-300 mb-2 max-w-2xl mx-auto">
-          Bridge your assets seamlessly between Ethereum and Stellar networks
-        </p>
-        <p className="text-sm text-gray-400 mb-6">
-          Powered by Hash Time Locked Contracts (HTLC) for secure cross-chain transfers
-        </p>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex justify-center mb-6">
-        <div className="flex bg-white/5 backdrop-blur-sm rounded-xl p-1 border border-white/10">
-          <button
-            onClick={() => setActiveTab('bridge')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-              activeTab === 'bridge'
-                ? 'bg-gradient-to-r from-[#6C63FF] to-[#3ABEFF] text-white shadow-lg'
-                : 'text-gray-300 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            Bridge
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-              activeTab === 'history'
-                ? 'bg-gradient-to-r from-[#6C63FF] to-[#3ABEFF] text-white shadow-lg'
-                : 'text-gray-300 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            History
-          </button>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center px-6 pb-32 gap-4 flex-1">
-        {activeTab === 'bridge' && (
-          <div className="w-full max-w-2xl ml-36">
-            <BridgeForm 
-              ethAddress={ethAddress} 
+      <main className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-8 px-4 pb-20 pt-10 md:px-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,560px)] lg:items-start lg:pt-16">
+        <section className="space-y-8">
+          <div className="max-w-2xl">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-100/80">
+              <RadioTower className="h-3.5 w-3.5" />
+              Live cross-chain rail
+            </div>
+            <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight text-white md:text-6xl">
+              Ethereum and Stellar,
+              <span className="hero-gradient block">synced with intent.</span>
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-300 md:text-lg">
+              Execute ETH and XLM swaps from a focused, production-grade control surface with live quotes, wallet state, and settlement history in one place.
+            </p>
+          </div>
+
+          <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              { icon: ShieldCheck, label: 'HTLC secured', value: 'Atomic path' },
+              { icon: Activity, label: 'Quote source', value: 'Relayer live' },
+              { icon: LockKeyhole, label: 'Mode', value: currentNetwork === 'mainnet' ? 'Mainnet' : 'Testnet' },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="metric-tile">
+                <Icon className="h-4 w-4 text-cyan-200" />
+                <span className="text-xs text-slate-400">{label}</span>
+                <strong className="text-sm font-semibold text-white">{value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="route-panel max-w-2xl">
+            <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Active route</p>
+                <h2 className="mt-1 text-lg font-semibold text-white">ETH / XLM liquidity lane</h2>
+              </div>
+              <Zap className="h-5 w-5 text-amber-200" />
+            </div>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 pt-4">
+              <div className="chain-node">
+                <img src="/images/eth.png" alt="ETH" className="h-7 w-7" />
+                <span>Ethereum</span>
+              </div>
+              <ArrowRightLeft className="h-5 w-5 text-slate-400" />
+              <div className="chain-node">
+                <img src="/images/xlm.png" alt="XLM" className="h-7 w-7" />
+                <span>Stellar</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="w-full">
+          {/* Tab Navigation */}
+          <div className="mb-4 flex justify-center lg:justify-end">
+            <div className="segmented-control">
+              <button
+                onClick={() => setActiveTab('bridge')}
+                className={activeTab === 'bridge' ? 'active' : ''}
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+                Bridge
+              </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={activeTab === 'history' ? 'active' : ''}
+              >
+                <History className="h-4 w-4" />
+                History
+              </button>
+            </div>
+          </div>
+
+          {activeTab === 'bridge' && (
+            <BridgeForm
+              ethAddress={ethAddress}
               stellarAddress={stellarAddress || ''}
             />
-          </div>
-        )}
-        
-        {activeTab === 'history' && (
-          <div className="w-full max-w-4xl">
+          )}
+
+          {activeTab === 'history' && (
             <TransactionHistory
               ethAddress={ethAddress}
               stellarAddress={stellarAddress || ''}
             />
-          </div>
-        )}
-      </div>
+          )}
+        </section>
+      </main>
 
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#6C63FF]/10 rounded-full blur-3xl"></div>
+      <div className="background-depth pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="background-grid" />
+        <div className="background-scanline" />
       </div>
 
       {/* Footer Bar */}
-      <div className="w-full h-[28px] bg-[#0b0f1a] flex items-center justify-end px-6">
+      <div className="relative z-10 flex h-9 w-full items-center justify-end border-t border-white/10 bg-[#050b0d]/80 px-6 backdrop-blur-xl">
         <a 
           href="https://x.com/OverBlock_" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="text-white hover:text-[#3ABEFF] transition-colors text-lg font-semibold flex items-center gap-2"
+          className="flex items-center gap-2 text-sm font-semibold text-slate-300 transition-colors hover:text-cyan-200"
         >
           Powered by OverBlock
-          <span className="text-xl">𝕏</span>
+          <span className="text-base">X</span>
         </a>
       </div>
 
-      {/* Overlay for closing dropdown */}
-      
       {/* Toast Container */}
       <ToastContainer 
         toasts={toast.toasts}
@@ -401,4 +450,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
