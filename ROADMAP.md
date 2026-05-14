@@ -58,32 +58,44 @@ open from internal review, then engage external auditors.
 **Exit criterion:** two audits public, all medium+ findings remediated,
 bounty open for 14 days with no critical reports.
 
-## Q1 2027 — Mainnet launch
+## Q1 2027 — Mainnet launch (and "not isolated" composability)
+
+Stellar's bridging surface area has changed materially in Q1 2026:
+Axelar ITS is **live on Stellar mainnet** since 16 February 2026, and
+Circle's CCTP v2 testnet support landed in April 2026 with mainnet
+imminent. We refuse to ship a Stellar HTLC bridge that arrives looking
+isolated from the rest of the ecosystem. That means two ecosystem
+adapters that were originally scoped to v2.1 are being pulled forward
+into the mainnet tranche.
 
 | Milestone | Status | Deliverable | Verifiable on |
 |---|---|---|---|
 | Mainnet deployment of EVM contracts | 🗓 | Deployed addresses in `deployments.mainnet.json`, verified on Etherscan | Etherscan |
 | Mainnet deployment of Soroban contracts | 🗓 | Deployed contract ids in `deployments.public.json` | Stellar Expert |
 | Coordinator production deployment (behind CDN/WAF) | 🗓 | Live coordinator URL with SLOs published | Status page |
-| First three community resolvers onboarded (open application + reference economics) | 🗓 | 3 registered addresses, ≥30 days active | Registry contract |
+| First three community resolvers onboarded | 🗓 | 3 registered addresses, ≥30 days active | Registry contract |
 | 14-day continuous mainnet TVL > $1k with zero incidents | 🗓 | Public dashboard of TVL + volume + uptime | Dashboard |
+| **Axelar ITS adapter** — any Axelar-wrapped asset on Stellar can be the destination leg of an OverSync swap (pulled forward from v2.1) | 🗓 | Reference resolver that unwraps via Axelar after our HTLC settles + e2e test on Stellar mainnet | Repo + Stellar Expert |
+| **CCTP v2 composable fast path** — frontend can route the USDC leg of a swap through CCTP v2 while the native-asset leg uses OverSync HTLC (pulled forward from v2.1, ships behind a feature flag until CCTP v2 hits Stellar mainnet) | 🗓 | `ExternalBridgeRoute` adapter in `@oversync/sdk` + frontend toggle + integration test | Repo |
 
 **Exit criterion:** all above shipped; we transition from "beta" to
 "public release" in repo README.
 
-## Q2–Q3 2027 — v2.1 and ecosystem hooks
+## Q2–Q3 2027 — v2.1 deepening
+
+With the headline ecosystem adapters delivered alongside mainnet, the
+v2.1 work focuses on protocol depth rather than connectivity.
 
 | Milestone | Status | Deliverable |
 |---|---|---|
 | Partial fills on the Soroban side (parity with EVM) | 🗓 | Updated `oversync-htlc` + tests |
-| Soroban non-XLM asset support in the SDK | 🗓 | `@oversync/sdk` 2.1 with multi-asset orders |
-| Native USDC support routed via CCTP v2 inside an OverSync swap (composable, optional fast path) | 🗓 | Reference adapter contract + e2e test |
-| Axelar ITS adapter: any Axelar-wrapped asset can be the destination leg of an OverSync swap | 🗓 | Reference resolver that bridges via Axelar |
+| Soroban non-XLM Soroban asset support in the SDK | 🗓 | `@oversync/sdk` 2.1 with multi-asset orders |
 | 1inch Fusion+ resolver mesh public integration | ⏳ | Joint announcement + co-published runner |
 | DAO Timelock + Governor for `ResolverRegistry.owner` | 🗓 | Governance contracts deployed; multisig retires |
+| Off-chain resolver auction protocol (replaces FCFS fills with sealed-bid auction) | 🗓 | Spec + reference resolver implementation |
 
-These v2.1 items are deliberately optional. We will ship them based on
-real demand from integrators after mainnet.
+These v2.1 items are deliberately optional and ship based on real
+demand from integrators after mainnet.
 
 ---
 

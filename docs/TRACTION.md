@@ -80,6 +80,32 @@ opportunity window:
 These three trends point at the same product, and to our knowledge no
 other team is shipping it.
 
+### 2.1 We are not the only Stellar bridge — and that is good for us
+
+The most common pushback we expect is: *"Axelar ITS is already live
+on Stellar, CCTP v2 is coming, Allbridge exists — why does OverSync
+need to exist?"* The honest answer is that **none of them addresses
+the segment we are aimed at**, and each of them growing strengthens
+our position rather than weakening it.
+
+| Bridge that just shipped on Stellar | What they take | What they leave on the table for OverSync |
+|---|---|---|
+| **CCTP v2** (testnet Apr 2026 → mainnet imminent) | Native USDC ↔ USDC across 15+ chains. Excellent for USDC-only flows. | Every swap that needs the *native* destination asset (XLM, ETH, arbitrary ERC-20) on the other side. CCTP v2 only bridges USDC. |
+| **Axelar ITS** (live since Feb 2026) | Wrapped representations of any token, validated by Axelar's signer set. Institutional users who accept the trust model. | Users who refuse validator-set trust assumptions. Users who want the native asset, not a wrapped representation. |
+| **Allbridge** (years on Stellar) | Retail wrap-and-bridge volume. | Trust-minimised treasury / OTC / power-user volume on Stellar. Allbridge's total Stellar TVL is ~$0.45M — they have not captured the segment we serve. |
+
+Each of these bridges *adds* to the Stellar cross-chain market.
+CCTP v2 going mainnet, in particular, brings significantly more USDC
+to Stellar, which means more users land on Stellar wanting to swap
+their USDC into native XLM — exactly the kind of atomic swap OverSync
+specialises in. We see incumbent growth as our top-of-funnel.
+
+We hard-committed to this thesis by **pulling the Axelar ITS adapter
+and the CCTP v2 fast-path forward into our Q1 2027 mainnet launch
+tranche** (see [`ROADMAP.md`](../ROADMAP.md)). When OverSync goes
+live, it goes live as an integrated piece of the Stellar bridging
+mesh, not as an isolated alternative.
+
 ---
 
 ## 3. Go-to-market

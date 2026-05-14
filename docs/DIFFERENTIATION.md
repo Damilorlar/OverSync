@@ -115,20 +115,41 @@ We will say this out loud because reviewers always test for it:
 - $5 retail swaps. The safety deposit and gas overhead make us
   uneconomic below a threshold.
 
+## We are complementary, not competing
+
+This is the single sentence we want every reviewer to leave with: **the
+three bridges above grow the market we sell into; they do not
+shrink it.**
+
+Specifically:
+
+| Trend | Why it helps OverSync |
+|---|---|
+| **CCTP v2 brings native USDC to Stellar.** Today, USDC on Stellar is largely issued natively, but cross-chain USDC was constrained. CCTP v2 unlocks free USDC flow between Stellar and 15+ EVM chains. | More USDC on Stellar means more total cross-chain value moving through the chain. A meaningful slice of that flow is users who land on Stellar with USDC and then want to be in native XLM — exactly the swap OverSync atomically executes in a single user signature. |
+| **Axelar ITS makes Stellar an institutional cross-chain destination.** Solv, Stronghold and Squid already route through Axelar's Stellar deployment. | Axelar's market is "institutions willing to trust a validator set." OverSync's market is "users who explicitly are not willing to." Both markets exist; Axelar's growth proves the demand side without addressing OverSync's segment. |
+| **Allbridge has been on Stellar for years with only ~$0.45M TVL (DefiLlama, May 2026).** | The retail wrap-and-bridge segment is small *on Stellar specifically*. We are not aiming to take that volume — we are aiming at the unserved trust-minimised + native-asset niche. |
+
+We took this seriously enough to pull the **Axelar ITS adapter** and
+the **CCTP v2 composable fast-path** out of v2.1 and into the
+Q1 2027 mainnet launch tranche (see [`ROADMAP.md`](../ROADMAP.md)).
+The plan is to ship our mainnet alongside first-class adapters for the
+neighbouring bridges, so a user opening the OverSync frontend gets a
+single UI in which the right tool is picked per swap:
+
+- USDC ↔ USDC across chains → routed via CCTP v2 (faster, native USDC).
+- Wrapped institutional assets ↔ ↔ → routed via Axelar ITS.
+- Native XLM ↔ ETH / arbitrary ERC-20 / atomic swap with HTLC guarantees → routed via OverSync.
+
+The shared SDK exposes an [`ExternalBridgeRoute`](../packages/sdk/src/types/index.ts)
+abstraction so this multi-route composition is non-breaking and any
+third party can publish their own adapter against the same interface.
+
 ## How the landscape affects our roadmap
 
-The competitive picture shapes [`ROADMAP.md`](ROADMAP.md). The two
-near-term implications:
+Two concrete changes from "no one else is on Stellar" planning:
 
-1. **CCTP v2 going mainnet on Stellar is a positive event for us.**
-   It increases USDC liquidity on Stellar, which makes Stellar a more
-   interesting chain to swap into. OverSync benefits from a richer
-   Stellar asset universe.
-2. **Axelar ITS being live raises the bar on integrations.** Any
-   on-chain resolver that already integrates with Axelar can also
-   resolve OverSync orders without writing new contracts; we will
-   publish a reference resolver that runs alongside an existing
-   Axelar resolver inventory.
+1. **We pulled Axelar + CCTP adapters forward into the mainnet tranche** (see ROADMAP.md). Shipping in isolation when the rest of the ecosystem is already interconnected would be a positioning mistake.
+2. **We did NOT widen the contract surface area to chase coverage.** Adding more chains is what Axelar does well; we double down on depth — better HTLC semantics, lower trust assumptions, tighter Fusion+ integration.
 
 ## References
 
