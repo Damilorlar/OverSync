@@ -300,16 +300,18 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {tx.ethTxHash && isRealHash(tx.ethTxHash) && (
                     <a
                       href={getEtherscanUrl(tx.ethTxHash)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-400 hover:text-blue-400 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-[11px] font-medium border border-white/5 transition-colors"
                       title="View on Etherscan"
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <img src="/images/eth.png" alt="ETH" className="h-3.5 w-3.5" />
+                      <span>Etherscan</span>
+                      <ExternalLink className="h-3 w-3 opacity-70" />
                     </a>
                   )}
                   {tx.stellarTxHash && isRealHash(tx.stellarTxHash) && (
@@ -317,10 +319,12 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
                       href={getStellarExplorerUrl(tx.stellarTxHash)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-400 hover:text-blue-400 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-[11px] font-medium border border-white/5 transition-colors"
                       title="View on Stellar Expert"
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <img src="/images/xlm.png" alt="XLM" className="h-3.5 w-3.5" />
+                      <span>Stellar Expert</span>
+                      <ExternalLink className="h-3 w-3 opacity-70" />
                     </a>
                   )}
                 </div>
@@ -367,7 +371,13 @@ export default function TransactionHistory({ ethAddress, stellarAddress }: Trans
                       title={`Refund settled on ${getRefundNetworkLabel(tx)}. Click to view the refund transaction.`}
                     >
                       <Undo2 className="h-3.5 w-3.5" />
-                      Refunded · view {getRefundNetworkLabel(tx)} tx
+                      <span>Refunded · view on</span>
+                      <img
+                        src={getRefundNetwork(tx) === 'ethereum' ? '/images/eth.png' : '/images/xlm.png'}
+                        alt={getRefundNetworkLabel(tx)}
+                        className="h-3.5 w-3.5"
+                      />
+                      <span>{getRefundNetworkLabel(tx)}</span>
                     </a>
                   )}
                   {canRefund(tx) && (

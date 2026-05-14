@@ -207,8 +207,18 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [balance, setBalance] = useState<string>('0');
   
-  // Real-time exchange rate state
+  // Real-time exchange rate state.
+  //
+  // Quotes come from the relayer's /api/prices endpoint (which itself proxies
+  // CoinGecko with a 60s cache). We deliberately do NOT call CoinGecko from
+  // the browser any more — that path is blocked by CORS in production and
+  // used to silently fall back to a hardcoded 10,000 XLM/ETH rate, which
+  // diverged from what the relayer actually settled at swap time. That is the
+  // bug behind "I expected 0.07 ETH but only got 0.024 ETH" reports.
   const [exchangeRate, setExchangeRate] = useState<number>(ETH_TO_XLM_RATE);
+  const [xlmUsdPrice, setXlmUsdPrice] = useState<number | null>(null);
+  const [ethUsdPrice, setEthUsdPrice] = useState<number | null>(null);
+  const [priceSource, setPriceSource] = useState<'coingecko' | 'cache' | 'fallback' | null>(null);
   const [isLoadingRate, setIsLoadingRate] = useState(false);
   const [rateLastUpdated, setRateLastUpdated] = useState<Date | null>(null);
   
@@ -289,48 +299,79 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
     };
   }, [direction, ethAddress, stellarAddress, networkInfo.stellar.horizonUrl]);
   
-  // Fetch real-time exchange rates with adaptive rate limiting - REMOVED AUTO-REFRESH
-  // Now only fetches when amount changes (on-demand)
-  
-      // Calculate corresponding amount when amount changes - UPDATED WITH ON-DEMAND PRICE FETCH
+  // Fetch live prices from the relayer whenever the user is about to need a
+  // quote. The relayer caches CoinGecko responses for 60s, so a flurry of
+  // keystrokes ends up as at most one network round-trip per minute. We use a
+  // ref-less cancelled flag to discard responses for stale renders.
   useEffect(() => {
     if (!amount || isNaN(parseFloat(amount))) {
       setEstimatedAmount('');
       return;
     }
 
-    // TEMPORARY: Skip CoinGecko API due to CORS issues in production
-    // Just use fallback rate directly for now
-    const updateRateAndCalculate = async () => {
-      setIsLoadingRate(true);
-      console.log('💱 Using fallback exchange rate (CoinGecko CORS issue)...');
-      
-      // Use fallback rate directly
-      const rate = ETH_TO_XLM_RATE;
-      setExchangeRate(rate);
-      setRateLastUpdated(new Date());
-      setIsLoadingRate(false);
-      
-      console.log('⚠️ Using fallback exchange rate:', rate);
-      
-      // Calculate equivalent amount with fallback rate
+    let cancelled = false;
+
+    const computeWith = (rate: number) => {
       const inputAmount = parseFloat(amount);
-      
       if (direction === 'eth_to_xlm') {
-        // ETH to XLM
         const xlmAmount = inputAmount * rate;
         setEstimatedAmount(xlmAmount.toFixed(2));
-        console.log(`💰 ${inputAmount} ETH = ${xlmAmount.toFixed(2)} XLM (rate: ${rate.toFixed(2)})`);
       } else {
-        // XLM to ETH  
         const ethAmount = inputAmount / rate;
         setEstimatedAmount(ethAmount.toFixed(6));
-        console.log(`💰 ${inputAmount} XLM = ${ethAmount.toFixed(6)} ETH (rate: ${rate.toFixed(2)})`);
+      }
+    };
+
+    const updateRateAndCalculate = async () => {
+      setIsLoadingRate(true);
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/prices`);
+        if (!res.ok) throw new Error(`prices endpoint returned ${res.status}`);
+        const body = await res.json();
+
+        const xlmPerEth = Number(body?.xlmPerEth);
+        const ethUsd = Number(body?.ethUsd);
+        const xlmUsd = Number(body?.xlmUsd);
+
+        if (
+          !Number.isFinite(xlmPerEth) || xlmPerEth <= 0 ||
+          !Number.isFinite(ethUsd) || ethUsd <= 0 ||
+          !Number.isFinite(xlmUsd) || xlmUsd <= 0
+        ) {
+          throw new Error('prices endpoint returned malformed data');
+        }
+
+        if (cancelled) return;
+
+        setExchangeRate(xlmPerEth);
+        setEthUsdPrice(ethUsd);
+        setXlmUsdPrice(xlmUsd);
+        setPriceSource(body?.source ?? 'coingecko');
+        setRateLastUpdated(new Date(body?.fetchedAt ?? Date.now()));
+        computeWith(xlmPerEth);
+      } catch (err) {
+        if (cancelled) return;
+        // Backend unreachable — fall back to the hardcoded rate but make it
+        // obvious in the UI so the user does not get a misleading estimate.
+        console.warn('Falling back to hardcoded rate (relayer /api/prices unavailable):', err);
+        setExchangeRate(ETH_TO_XLM_RATE);
+        setEthUsdPrice(null);
+        setXlmUsdPrice(null);
+        setPriceSource('fallback');
+        setRateLastUpdated(new Date());
+        computeWith(ETH_TO_XLM_RATE);
+      } finally {
+        if (!cancelled) setIsLoadingRate(false);
       }
     };
 
     updateRateAndCalculate();
-  }, [amount, direction]); // Fetch when amount or direction changes
+
+    return () => {
+      cancelled = true;
+    };
+  }, [amount, direction]);
   
   // Yön değiştirme
   const handleSwapDirection = () => {
@@ -1260,8 +1301,25 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
           {/* Exchange Rate Info */}
           <div className="bg-[#3ABEFF]/10 border border-[#3ABEFF]/20 rounded-xl p-2">
             <div className="flex items-center justify-between mb-1">
-              <div className="text-blue-400 font-medium text-xs">
-                💱 Exchange Rate
+              <div className="flex items-center gap-1.5 text-blue-400 font-medium text-xs">
+                <span>Exchange rate</span>
+                {priceSource && priceSource !== 'fallback' && (
+                  <span
+                    className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-emerald-300"
+                    title={priceSource === 'cache' ? 'Served from 60s server-side cache' : 'Fresh from CoinGecko'}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    live
+                  </span>
+                )}
+                {priceSource === 'fallback' && (
+                  <span
+                    className="text-[10px] uppercase tracking-wide text-amber-300"
+                    title="The relayer price feed is unreachable; this is a hardcoded estimate."
+                  >
+                    fallback
+                  </span>
+                )}
               </div>
               {isLoadingRate ? (
                 <div className="flex items-center gap-1 text-blue-400 text-xs">
@@ -1270,16 +1328,30 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
                 </div>
               ) : (
                 <div className="text-blue-300 text-xs">
-                  {rateLastUpdated && `Updated ${new Date(rateLastUpdated).toLocaleTimeString()}`}
+                  {rateLastUpdated && `Updated ${rateLastUpdated.toLocaleTimeString()}`}
                 </div>
               )}
             </div>
             <div className="text-white text-xs">
               1 ETH = {exchangeRate.toLocaleString(undefined, { maximumFractionDigits: 2 })} XLM
+              <span className="text-gray-500 ml-1.5">
+                · 1 XLM = {(1 / exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 8 })} ETH
+              </span>
             </div>
-            <div className="text-gray-400 text-xs mt-1">
-              Using fallback rate (live pricing coming soon)
-            </div>
+            {ethUsdPrice !== null && xlmUsdPrice !== null && (
+              <div className="text-gray-400 text-[11px] mt-1">
+                ETH ${ethUsdPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                <span className="mx-1.5 text-gray-600">·</span>
+                XLM ${xlmUsdPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                <span className="mx-1.5 text-gray-600">·</span>
+                via relayer (CoinGecko, 60s cache)
+              </div>
+            )}
+            {priceSource === 'fallback' && (
+              <div className="text-amber-300/80 text-[11px] mt-1">
+                Live price feed unreachable. Final swap amount will use the relayer's price at execution time and may differ.
+              </div>
+            )}
           </div>
           
           {/* Status Message */}

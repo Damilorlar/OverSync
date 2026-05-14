@@ -180,32 +180,88 @@ const ETH_TO_XLM_RATE = 10000; // 1 ETH = 10,000 XLM (LEGACY - now using real-ti
 // Network-aware contract addresses  
 const HTLC_CONTRACT_ADDRESS = getHtlcBridgeAddress(); // Dynamic: testnet/mainnet
 
-// Real-time price fetching function
-async function getRealTimePrices(): Promise<{xlmUsdPrice: number, ethUsdPrice: number, ethToXlmRate: number}> {
-  let xlmUsdPrice = 0.12; // Default fallback
-  let ethUsdPrice = 3500;  // Default fallback
-  
+// Real-time price fetching function with in-memory cache.
+//
+// CoinGecko's public API is aggressive about rate limits (~10-30 calls/min from
+// a single IP), and every swap path on the relayer needs the same prices. We
+// also serve them to the frontend via /api/prices, so without caching a busy
+// page would burn through the quota in seconds and start returning fallback
+// values. PRICE_CACHE_TTL_MS keeps a fresh quote for 60s, which is well within
+// the precision needed for a quote-then-confirm UX and matches what
+// market-data providers consider "real time" for retail dashboards.
+interface PriceSnapshot {
+  xlmUsdPrice: number;
+  ethUsdPrice: number;
+  ethToXlmRate: number;
+  fetchedAt: number;
+  source: 'coingecko' | 'fallback' | 'cache';
+}
+
+const PRICE_CACHE_TTL_MS = 60_000;
+let cachedPrices: PriceSnapshot | null = null;
+let inflightPriceFetch: Promise<PriceSnapshot> | null = null;
+
+async function fetchPricesFromCoinGecko(): Promise<PriceSnapshot> {
+  const fallback: PriceSnapshot = {
+    xlmUsdPrice: 0.12,
+    ethUsdPrice: 3500,
+    ethToXlmRate: 3500 / 0.12,
+    fetchedAt: Date.now(),
+    source: 'fallback',
+  };
+
   try {
-    // Try to get real-time prices from CoinGecko API
-    const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=stellar,ethereum&vs_currencies=usd');
-    if (priceResponse.ok) {
-      const priceData = await priceResponse.json() as any;
-      xlmUsdPrice = priceData.stellar?.usd || 0.12;
-      ethUsdPrice = priceData.ethereum?.usd || 3500;
-      console.log('📊 Real-time prices fetched from CoinGecko:', { xlmUsdPrice, ethUsdPrice });
-    } else {
-      console.warn('⚠️ CoinGecko API failed, using fallback prices');
+    const priceResponse = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=stellar,ethereum&vs_currencies=usd'
+    );
+    if (!priceResponse.ok) {
+      console.warn('⚠️ CoinGecko API non-OK:', priceResponse.status);
+      return fallback;
     }
-  } catch (priceError) {
-    console.warn('⚠️ Price fetch failed, using fallback prices:', priceError.message);
+    const priceData = await priceResponse.json() as any;
+    const xlmUsdPrice = priceData.stellar?.usd;
+    const ethUsdPrice = priceData.ethereum?.usd;
+    if (typeof xlmUsdPrice !== 'number' || typeof ethUsdPrice !== 'number' || xlmUsdPrice <= 0 || ethUsdPrice <= 0) {
+      console.warn('⚠️ CoinGecko returned malformed prices, using fallback');
+      return fallback;
+    }
+    console.log('📊 Real-time prices fetched from CoinGecko:', { xlmUsdPrice, ethUsdPrice });
+    return {
+      xlmUsdPrice,
+      ethUsdPrice,
+      ethToXlmRate: ethUsdPrice / xlmUsdPrice,
+      fetchedAt: Date.now(),
+      source: 'coingecko',
+    };
+  } catch (priceError: any) {
+    console.warn('⚠️ Price fetch failed, using fallback prices:', priceError?.message);
+    return fallback;
   }
-  
-  const ethToXlmRate = ethUsdPrice / xlmUsdPrice; // 1 ETH = ? XLM
-  
+}
+
+async function getPriceSnapshot(): Promise<PriceSnapshot> {
+  const now = Date.now();
+  if (cachedPrices && now - cachedPrices.fetchedAt < PRICE_CACHE_TTL_MS) {
+    return { ...cachedPrices, source: 'cache' };
+  }
+  // De-dupe concurrent fetches so a burst of swap requests does not fan out
+  // to multiple CoinGecko calls in the same tick.
+  if (!inflightPriceFetch) {
+    inflightPriceFetch = fetchPricesFromCoinGecko().finally(() => {
+      inflightPriceFetch = null;
+    });
+  }
+  const snapshot = await inflightPriceFetch;
+  cachedPrices = snapshot;
+  return snapshot;
+}
+
+async function getRealTimePrices(): Promise<{xlmUsdPrice: number, ethUsdPrice: number, ethToXlmRate: number}> {
+  const snapshot = await getPriceSnapshot();
   return {
-    xlmUsdPrice,
-    ethUsdPrice,
-    ethToXlmRate
+    xlmUsdPrice: snapshot.xlmUsdPrice,
+    ethUsdPrice: snapshot.ethUsdPrice,
+    ethToXlmRate: snapshot.ethToXlmRate,
   };
 }
 
@@ -481,7 +537,37 @@ const activeOrders = new Map();
     res.json({ message: 'API endpoints are working!', timestamp: new Date().toISOString() });
   });
 
-
+  // GET /api/prices
+  //
+  // Public, cached price feed used by the frontend to render accurate quote
+  // estimates *and* by external monitoring. We intentionally proxy CoinGecko
+  // through the relayer for two reasons:
+  //   1. The browser cannot call CoinGecko directly (CORS), so a previous
+  //      build silently fell back to a hardcoded 1 ETH = 10,000 XLM rate.
+  //      That diverged from what the relayer actually settled at swap time,
+  //      so users were quoted ~3x more XLM than they ended up receiving.
+  //   2. Centralizing the fetch lets us cache (PRICE_CACHE_TTL_MS) and protect
+  //      ourselves from CoinGecko's rate limits — a high-traffic page would
+  //      otherwise blow through the free quota.
+  app.get('/api/prices', async (_req, res) => {
+    try {
+      const snapshot = await getPriceSnapshot();
+      res.json({
+        xlmUsd: snapshot.xlmUsdPrice,
+        ethUsd: snapshot.ethUsdPrice,
+        ethPerXlm: snapshot.xlmUsdPrice / snapshot.ethUsdPrice,
+        xlmPerEth: snapshot.ethToXlmRate,
+        source: snapshot.source,
+        fetchedAt: snapshot.fetchedAt,
+        cacheTtlMs: PRICE_CACHE_TTL_MS,
+      });
+    } catch (err: any) {
+      res.status(503).json({
+        error: 'Price feed temporarily unavailable',
+        details: err?.message ?? String(err),
+      });
+    }
+  });
 
   console.log('📍 DEBUG: Test endpoints registered (root + api)');
   console.log('📍 DEBUG: Now registering transaction history endpoint...');
