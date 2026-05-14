@@ -205,158 +205,75 @@ export default function BridgeForm({ ethAddress, stellarAddress }: BridgeFormPro
   const fromToken = direction === 'eth_to_xlm' ? ETH_TOKEN : XLM_TOKEN;
   const toToken = direction === 'eth_to_xlm' ? XLM_TOKEN : ETH_TOKEN;
 
-  // Balance fetch function with rate limiting and retry mechanism
-  const fetchBalance = async () => {
-    console.log('🔍 Fetching balance...', { direction, ethAddress, stellarAddress });
-    
-    // Rate limiting: Don't fetch too frequently
-    const now = Date.now();
-    const lastFetch = (window as any).lastBalanceFetch || 0;
-    const minInterval = 2000; // Minimum 2 seconds between fetches
-    
-    if (now - lastFetch < minInterval) {
-      console.log('⏳ Rate limiting: Skipping balance fetch (too soon)');
-      return;
-    }
-    
-    (window as any).lastBalanceFetch = now;
-    
-    try {
-      if (direction === 'eth_to_xlm' && ethAddress && window.ethereum) {
-        console.log('💰 Fetching ETH balance for:', ethAddress);
-        
-        // Add retry mechanism for MetaMask RPC calls
-        let retries = 3;
-        let ethBalance = null;
-        
-        while (retries > 0 && !ethBalance) {
-          try {
-            ethBalance = await window.ethereum.request({
-              method: 'eth_getBalance',
-              params: [ethAddress, 'latest']
-            });
-            break;
-          } catch (rpcError: any) {
-            console.warn(`⚠️ ETH balance fetch attempt failed (${4 - retries}/3):`, rpcError.message);
-            retries--;
-            
-            if (retries > 0) {
-              // Wait with exponential backoff
-              const delay = (4 - retries) * 1000; // 1s, 2s, 3s
-              console.log(`⏳ Retrying in ${delay}ms...`);
-              await new Promise(resolve => setTimeout(resolve, delay));
-            } else {
-              throw rpcError;
-            }
+  // Fetch balance when direction or addresses change
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchEthBalance = async (addr: string): Promise<string> => {
+      if (!window.ethereum) {
+        throw new Error('MetaMask not available');
+      }
+      const ethBalance = await window.ethereum.request({
+        method: 'eth_getBalance',
+        params: [addr, 'latest']
+      });
+      const balanceInEth = (parseInt(ethBalance, 16) / Math.pow(10, 18)).toFixed(4);
+      return balanceInEth;
+    };
+
+    const fetchXlmBalance = async (addr: string): Promise<string> => {
+      const horizonUrl = networkInfo.stellar.horizonUrl;
+      const response = await fetch(`${horizonUrl}/accounts/${addr}`);
+      if (!response.ok) {
+        // Account may not exist yet (404), return 0
+        if (response.status === 404) {
+          return '0.0000';
+        }
+        throw new Error(`Stellar API error: ${response.status}`);
+      }
+      const accountData = await response.json();
+      const xlmBalance = accountData.balances.find((b: any) => b.asset_type === 'native')?.balance || '0';
+      return parseFloat(xlmBalance).toFixed(4);
+    };
+
+    const loadBalance = async () => {
+      console.log('🔄 Loading balance for direction:', direction);
+
+      if (direction === 'eth_to_xlm' && ethAddress) {
+        setBalance('Loading...');
+        try {
+          const bal = await fetchEthBalance(ethAddress);
+          if (!cancelled) {
+            console.log('✅ ETH balance loaded:', bal);
+            setBalance(bal);
           }
+        } catch (err: any) {
+          console.error('❌ ETH balance fetch failed:', err);
+          if (!cancelled) setBalance('0');
         }
-        
-        if (ethBalance) {
-          console.log('💰 Raw ETH balance:', ethBalance);
-          const balanceInEth = (parseInt(ethBalance, 16) / Math.pow(10, 18)).toFixed(4);
-          console.log('💰 Formatted ETH balance:', balanceInEth);
-          setBalance(balanceInEth);
-        }
-        
       } else if (direction === 'xlm_to_eth' && stellarAddress) {
-        console.log('⭐ Fetching XLM balance for:', stellarAddress);
-        
-        // Stellar balance with retry
-        let retries = 3;
-        let accountData = null;
-        
-        while (retries > 0 && !accountData) {
-          try {
-            // Use network configuration to determine correct Horizon URL
-            const horizonUrl = networkInfo.stellar.horizonUrl;
-            const response = await fetch(`${horizonUrl}/accounts/${stellarAddress}`);
-            
-            if (!response.ok) {
-              throw new Error(`Stellar API error: ${response.status}`);
-            }
-            
-            accountData = await response.json();
-            break;
-          } catch (stellarError: any) {
-            console.warn(`⚠️ XLM balance fetch attempt failed (${4 - retries}/3):`, stellarError.message);
-            retries--;
-            
-            if (retries > 0) {
-              const delay = (4 - retries) * 1000;
-              console.log(`⏳ Retrying in ${delay}ms...`);
-              await new Promise(resolve => setTimeout(resolve, delay));
-            } else {
-              throw stellarError;
-            }
+        setBalance('Loading...');
+        try {
+          const bal = await fetchXlmBalance(stellarAddress);
+          if (!cancelled) {
+            console.log('✅ XLM balance loaded:', bal);
+            setBalance(bal);
           }
+        } catch (err: any) {
+          console.error('❌ XLM balance fetch failed:', err);
+          if (!cancelled) setBalance('0');
         }
-        
-        if (accountData) {
-          console.log('⭐ Stellar account data:', accountData);
-          const xlmBalance = accountData.balances.find((b: any) => b.asset_type === 'native')?.balance || '0';
-          console.log('⭐ XLM balance:', xlmBalance);
-          setBalance(parseFloat(xlmBalance).toFixed(4));
-        }
-        
       } else {
-        console.log('❌ Balance fetch conditions not met:', { 
-          direction, 
-          ethAddress: !!ethAddress, 
-          stellarAddress: !!stellarAddress,
-          hasEthereum: !!window.ethereum 
-        });
         setBalance('0');
       }
-    } catch (error: any) {
-      console.error('❌ Balance fetch error:', error);
-      
-      // Always set balance to 0 on error to prevent stuck "Loading..." state
-      setBalance('0');
-      
-      // Show user-friendly error message for circuit breaker
-      if (error.code === -32603 && error.message?.includes('circuit breaker')) {
-        console.log('🔄 MetaMask circuit breaker is active - this is temporary');
-        
-        // Show toast notification to user
-        if ((window as any).toast) {
-          (window as any).toast.error(
-            'MetaMask Geçici Sorunu', 
-            'MetaMask çok fazla istek aldı. Lütfen 1-2 dakika bekleyin veya MetaMask\'i yeniden başlatın.'
-          );
-        }
-      }
-    }
-  };
+    };
 
-  // Fetch balance when direction or addresses change - with debounce
-  useEffect(() => {
-    console.log('🔄 Balance fetch useEffect triggered:', { 
-      direction, 
-      ethAddress: ethAddress ? `${ethAddress.slice(0, 8)}...` : 'none', 
-      stellarAddress: stellarAddress ? `${stellarAddress.slice(0, 8)}...` : 'none' 
-    });
-    
-    if ((direction === 'eth_to_xlm' && ethAddress) || (direction === 'xlm_to_eth' && stellarAddress)) {
-      console.log('✅ Conditions met, setting Loading... and scheduling fetch');
-      
-      // Immediately reset balance to show loading state when direction changes
-      setBalance('Loading...');
-      
-      // Debounce balance fetching to prevent too many calls
-      const timeoutId = setTimeout(() => {
-        console.log('⏰ Timeout fired, calling fetchBalance for direction:', direction);
-        fetchBalance();
-      }, 500); // Wait 500ms after last change
-      
-      return () => {
-        console.log('🧹 Cleanup: clearing timeout for direction:', direction);
-        clearTimeout(timeoutId);
-      };
-    } else {
-      console.log('❌ Conditions not met, setting balance to 0');
-      setBalance('0');
-    }
-  }, [direction, ethAddress, stellarAddress]);
+    loadBalance();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [direction, ethAddress, stellarAddress, networkInfo.stellar.horizonUrl]);
   
   // Fetch real-time exchange rates with adaptive rate limiting - REMOVED AUTO-REFRESH
   // Now only fetches when amount changes (on-demand)
