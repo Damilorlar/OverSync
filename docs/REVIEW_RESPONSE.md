@@ -187,6 +187,71 @@ released after first-tranche deliverables ship.
 
 ---
 
+## Resubmission positioning
+
+The v1 review was correct: the original build mixed a working demo,
+single-relayer custody assumptions, placeholder history data, and
+overconfident documentation. The resubmission should therefore be
+read as a v2 rebuild, not as a cosmetic update to v1.
+
+What is complete for the resubmission:
+
+- Soroban HTLC contract replaces the Stellar claimable-balance
+  custody path for v2 testnet.
+- Open resolver registry replaces the single privileged relayer as
+  the target operator model.
+- Refunds are explicit: on-chain HTLC refund, frontend refund dialog,
+  inline XLM refund, and watchdog refund.
+- Placeholder transaction history is filtered and no longer presented
+  as real activity.
+- Uptime, volume, and TVL claims are removed unless they can be
+  independently verified.
+- Budget is tranche-gated and mapped to concrete engineering
+  deliverables.
+
+What remains intentionally unfinished before v2 mainnet:
+
+- v2 is testnet-first. Mainnet remains on the legacy v1 path until the
+  v2 contracts complete hardening and independent audit.
+- The legacy claimable-balance implementation remains in the repo only
+  for v1 compatibility and historical reference; it is not the v2
+  trust model.
+- Foundry fuzzing, cross-chain differential tests, Slither
+  must-not-fail CI, multisig governance, and public audits are still
+  pre-mainnet deliverables.
+- Team expansion is planned, not completed. The open resolver network
+  lowers operational dependence on the founding developer, but formal
+  staffing remains a grant milestone.
+
+Suggested summary for the SCF resubmission:
+
+> After the SCF #40 review, we rebuilt OverSync around a native
+> Soroban HTLC, permissionless refunds, and an open resolver model.
+> The v2 testnet no longer depends on Stellar claimable-balance custody
+> or fabricated history data. We are not asking reviewers to treat v2
+> as mainnet-ready: mainnet launch is gated on fuzz/differential tests,
+> multisig governance, and independent audits. The grant request funds
+> those concrete hardening steps rather than broad "audit preparation"
+> or generic beta spend.
+
+## Evidence to attach before final submission
+
+Before submitting, attach real testnet evidence rather than relying on
+claims in prose:
+
+- At least one successful ETH→XLM v2 testnet swap with Sepolia
+  Etherscan and Stellar Expert links.
+- At least one successful XLM→ETH v2 testnet swap with both explorer
+  links.
+- One failed/expired order recovered through `refundOrder` with the
+  refund transaction link.
+- One XLM→ETH failure path recovered through the automatic refund or
+  watchdog refund, with Stellar Expert link.
+- Screenshot or dashboard export showing the coordinator history API
+  returning only real transactions.
+
+---
+
 ## Verification commands
 
 A reviewer can verify the claims above with:

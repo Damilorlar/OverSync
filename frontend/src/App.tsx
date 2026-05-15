@@ -41,6 +41,7 @@ function App() {
   const [showIntro, setShowIntro] = useState(() => {
     return sessionStorage.getItem('oversync:intro-seen') !== 'true';
   });
+  const [introLogoReady, setIntroLogoReady] = useState(false);
 
   // Freighter hook usage
   const {
@@ -56,7 +57,7 @@ function App() {
   const toast = useToast();
 
   useEffect(() => {
-    if (!showIntro) {
+    if (!showIntro || !introLogoReady) {
       return;
     }
 
@@ -64,10 +65,10 @@ function App() {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const timer = window.setTimeout(() => {
       setShowIntro(false);
-    }, prefersReducedMotion ? 250 : 2850);
+    }, prefersReducedMotion ? 250 : 4350);
 
     return () => window.clearTimeout(timer);
-  }, [showIntro]);
+  }, [showIntro, introLogoReady]);
 
   // Auto-connect MetaMask if previously connected
   useEffect(() => {
@@ -190,12 +191,24 @@ function App() {
       {showIntro && (
         <div className="intro-screen" aria-label="OverSync loading">
           <div className="intro-card">
-            <div className="intro-logo-wrap">
-              <img
-                src="/images/oversync-logo.png"
-                alt="OverSync"
-                className="intro-logo"
-              />
+            <div className="intro-rail">
+              <div className="intro-node intro-node-eth">
+                <img src="/images/eth.png" alt="" />
+              </div>
+              <div className="intro-logo-wrap">
+                <img
+                  src="/images/oversync-logo.png"
+                  alt="OverSync"
+                  className="intro-logo"
+                  loading="eager"
+                  decoding="sync"
+                  onLoad={() => setIntroLogoReady(true)}
+                  onError={() => setIntroLogoReady(true)}
+                />
+              </div>
+              <div className="intro-node intro-node-xlm">
+                <img src="/images/xlm.png" alt="" />
+              </div>
             </div>
             <div className="intro-copy">
               <p>OverSync</p>

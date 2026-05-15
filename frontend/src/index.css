@@ -406,9 +406,9 @@ input[type=number] {
   display: grid;
   place-items: center;
   background:
-    linear-gradient(115deg, transparent 0 18%, rgba(67, 97, 238, 0.2) 25%, transparent 39%),
-    linear-gradient(145deg, #02030a 0%, #070918 42%, #0d1028 72%, #030306 100%);
-  animation: intro-screen-out 0.5s ease 2.35s forwards;
+    radial-gradient(circle at 50% 62%, rgba(0, 226, 255, 0.15), transparent 32%),
+    linear-gradient(145deg, #02030a 0%, #060a18 44%, #0b1026 74%, #030306 100%);
+  animation: intro-screen-out 0.5s ease 3.85s forwards;
 }
 
 .intro-screen::before {
@@ -416,11 +416,12 @@ input[type=number] {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(105deg, transparent 0 43%, rgba(255, 255, 255, 0.12) 48%, transparent 54% 100%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 88px),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 42px);
-  opacity: 0.42;
-  transform: perspective(700px) rotateX(62deg) translateY(22%);
+    linear-gradient(105deg, transparent 0 42%, rgba(255, 255, 255, 0.13) 48%, transparent 55% 100%),
+    linear-gradient(90deg, transparent 0 18%, rgba(0, 226, 255, 0.09) 36%, transparent 54%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 92px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 46px);
+  opacity: 0.5;
+  transform: perspective(760px) rotateX(64deg) translateY(24%);
   transform-origin: center bottom;
 }
 
@@ -438,29 +439,139 @@ input[type=number] {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 1.15rem;
-  transform: translate(-48px, -34px);
+  gap: 1rem;
+  width: min(86vw, 620px);
+  transform: translateY(-24px);
   animation: intro-card-in 0.7s cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 
-.intro-logo-wrap {
+.intro-rail {
+  position: relative;
   display: grid;
-  height: 248px;
-  width: 248px;
+  width: min(86vw, 620px);
+  min-height: 310px;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.intro-rail::before,
+.intro-rail::after {
+  content: '';
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 226, 255, 0.76), rgba(142, 160, 255, 0.42), transparent);
+  box-shadow: 0 0 24px rgba(0, 226, 255, 0.26);
+}
+
+.intro-rail::after {
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.9) 48%, transparent 58%);
+  transform: translateX(-42%);
+  animation: intro-rail-sweep 1.9s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.intro-logo-wrap {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  height: 260px;
+  width: 260px;
   place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.08), transparent 40%),
+    radial-gradient(circle, rgba(0, 226, 255, 0.12), rgba(4, 8, 18, 0.04) 58%, transparent 72%);
+  box-shadow:
+    0 0 0 1px rgba(114, 226, 255, 0.22) inset,
+    0 0 0 12px rgba(114, 226, 255, 0.025),
+    0 30px 80px rgba(0, 0, 0, 0.42),
+    0 0 72px rgba(0, 226, 255, 0.16);
   filter:
     drop-shadow(0 18px 34px rgba(0, 0, 0, 0.42))
     drop-shadow(0 0 24px rgba(0, 226, 255, 0.22));
 }
 
+.intro-logo-wrap::before,
+.intro-logo-wrap::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.intro-logo-wrap::before {
+  inset: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(0, 226, 255, 0.58);
+  border-right-color: rgba(142, 160, 255, 0.34);
+  animation: intro-orbit 4.8s linear infinite;
+}
+
+.intro-logo-wrap::after {
+  inset: -12px;
+  border: 1px solid rgba(114, 226, 255, 0.09);
+  border-bottom-color: rgba(0, 226, 255, 0.26);
+  transform: rotate(18deg);
+}
+
 .intro-logo {
   height: 196px;
   width: 196px;
-  border-radius: 1.65rem;
+  border-radius: 50%;
   object-fit: cover;
   opacity: 1;
   filter: none;
   animation: intro-logo-pulse 1.4s ease-in-out both;
+}
+
+.intro-node {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  height: 88px;
+  width: 88px;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(114, 226, 255, 0.2);
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.12), transparent 38%),
+    rgba(9, 15, 32, 0.28);
+  box-shadow:
+    0 0 0 8px rgba(114, 226, 255, 0.025),
+    0 20px 50px rgba(0, 0, 0, 0.3),
+    0 0 34px rgba(0, 226, 255, 0.12);
+  animation: intro-node-in 0.68s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.intro-node::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left-color: rgba(142, 160, 255, 0.38);
+  border-top-color: rgba(0, 226, 255, 0.42);
+}
+
+.intro-node img {
+  height: 44px;
+  width: 44px;
+  object-fit: contain;
+}
+
+.intro-node-eth {
+  justify-self: end;
+  animation-delay: 0.12s;
+}
+
+.intro-node-xlm {
+  justify-self: start;
+  animation-delay: 0.24s;
 }
 
 .intro-copy {
@@ -487,7 +598,7 @@ input[type=number] {
 .intro-loader {
   position: relative;
   height: 2px;
-  width: 220px;
+  width: min(72vw, 320px);
   overflow: hidden;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.1);
@@ -503,7 +614,7 @@ input[type=number] {
   border-radius: inherit;
   background: linear-gradient(90deg, #8ea0ff, #3f5cff);
   transform-origin: left center;
-  animation: intro-loader-fill 2.15s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: intro-loader-fill 3.85s linear forwards;
 }
 
 @keyframes intro-card-in {
@@ -524,6 +635,38 @@ input[type=number] {
   }
   52% {
     transform: scale(1.045);
+  }
+}
+
+@keyframes intro-node-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes intro-rail-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-48%);
+  }
+  20%,
+  68% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(48%);
+  }
+}
+
+@keyframes intro-orbit {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -554,6 +697,35 @@ input[type=number] {
 }
 
 @media (max-width: 640px) {
+  .intro-card {
+    transform: translateY(-14px);
+  }
+
+  .intro-rail {
+    width: min(94vw, 390px);
+    min-height: 230px;
+  }
+
+  .intro-logo-wrap {
+    height: 178px;
+    width: 178px;
+  }
+
+  .intro-logo {
+    height: 134px;
+    width: 134px;
+  }
+
+  .intro-node {
+    height: 60px;
+    width: 60px;
+  }
+
+  .intro-node img {
+    height: 31px;
+    width: 31px;
+  }
+
   .segmented-control {
     width: 100%;
   }

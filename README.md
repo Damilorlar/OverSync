@@ -19,6 +19,16 @@ state in which user funds are stranded under operator control.
 > plan and [`docs/REVIEW_RESPONSE.md`](docs/REVIEW_RESPONSE.md) for
 > the full response to v1 reviewer feedback.
 
+> **Important mainnet caveat.** The current mainnet UI still routes
+> through the legacy v1 single-relayer implementation. That path keeps
+> the historical Stellar claimable-balance code in
+> [`stellar/src/claimable-balance.ts`](stellar/src/claimable-balance.ts)
+> for compatibility, and it should not be evaluated as the v2 trust
+> model. The v2 architecture reviewers should assess is the testnet
+> Soroban HTLC deployment listed below; v2 mainnet is intentionally
+> gated on fuzz/differential tests, multisig governance, and external
+> audit.
+
 ---
 
 ## Why OverSync exists

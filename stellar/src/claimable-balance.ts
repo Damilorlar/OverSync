@@ -1,6 +1,12 @@
 /**
  * @fileoverview Stellar Claimable Balance with HTLC functionality
  * @description Creates hash-locked time-locked claimable balances for cross-chain swaps
+ *
+ * @deprecated Legacy v1 path only. OverSync v2 uses the native Soroban HTLC
+ * contract in `soroban/contracts/htlc` for Stellar-side custody, hashlock,
+ * timelock, claim, and refund semantics. This module remains for historical
+ * compatibility with the v1 single-relayer stack and must not be cited as the
+ * v2 trust model.
  */
 
 import crypto from 'crypto';
