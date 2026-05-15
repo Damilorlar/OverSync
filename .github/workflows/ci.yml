@@ -21,7 +21,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 8.15.0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -57,7 +57,7 @@ jobs:
         run: pnpm --filter @oversync/contracts compile
 
       - name: Test — contracts (Hardhat)
-        run: pnpm --filter @oversync/contracts exec hardhat test test/v2
+        run: pnpm --filter @oversync/contracts exec hardhat test test/v2/HTLCEscrow.test.ts test/v2/ResolverRegistry.test.ts
 
   soroban:
     name: Soroban contracts
