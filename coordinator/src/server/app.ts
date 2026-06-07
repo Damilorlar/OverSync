@@ -3,6 +3,8 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import type { Logger } from "pino";
 import { healthRoutes } from "./routes/health.js";
+import { metricsRoutes } from "./routes/metrics.js";
+import { httpRequestDuration } from "../metrics.js";
 import { ordersRoutes } from "./routes/orders.js";
 import { secretsRoutes } from "./routes/secrets.js";
 import { quotesRoutes } from "./routes/quotes.js";
@@ -29,7 +31,18 @@ export function createApp(deps: AppDeps): Express {
     })
   );
 
+  // Prometheus HTTP duration instrumentation
+  app.use((req, res, next) => {
+    const end = httpRequestDuration.startTimer();
+    res.on("finish", () => {
+      const route = (req.route?.path as string) ?? req.path;
+      end({ method: req.method, route, status_code: String(res.statusCode) });
+    });
+    next();
+  });
+
   app.use(healthRoutes());
+  app.use(metricsRoutes());
   app.use("/api", ordersRoutes(deps.orders));
   app.use("/api", secretsRoutes(deps.secrets));
   app.use("/api", quotesRoutes(deps.quotes));

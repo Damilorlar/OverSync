@@ -2,6 +2,7 @@ import { rpc } from "@stellar/stellar-sdk";
 import type { Logger } from "pino";
 import type { CoordinatorConfig } from "../config.js";
 import type { OrderService } from "../services/order-service.js";
+import { listenerLastBlock } from "../metrics.js";
 
 /**
  * Polls the Soroban RPC for HTLC contract events and feeds them into
@@ -42,6 +43,7 @@ export class SorobanListener {
     while (!this.stopped) {
       try {
         const latest = await this.server.getLatestLedger();
+        listenerLastBlock.set({ chain: "soroban" }, latest.sequence);
         const startLedger = this.cursor === undefined ? latest.sequence - 1 : undefined;
         const events = await this.server.getEvents({
           filters: [{ type: "contract", contractIds: [contractId] }],
