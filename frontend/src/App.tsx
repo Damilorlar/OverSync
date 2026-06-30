@@ -14,10 +14,12 @@ import EvidenceExportAction from './components/EvidenceExportAction'
 import NetworkMismatchBanner from './components/NetworkMismatchBanner'
 import MainnetVersionBanner from './components/MainnetVersionBanner'
 import LaunchReadinessSurface from './pages/LaunchReadinessSurface'
+import RefundTimelineSurface from './pages/RefundTimelineSurface'
 import {
   Activity,
   ArrowRightLeft,
   ChevronDown,
+  Clock,
   ExternalLink,
   History,
   LockKeyhole,
@@ -223,6 +225,7 @@ function App() {
   return (
     <Routes>
       <Route path="/launch-readiness" element={<LaunchReadinessSurface />} />
+      <Route path="/refund-simulator" element={<RefundTimelineSurface />} />
       <Route
         path="*"
         element={
@@ -289,6 +292,14 @@ function App() {
             >
               <ShieldEllipsis className="h-3.5 w-3.5" />
               Launch readiness
+            </Link>
+            <Link
+              to="/refund-simulator"
+              className="inline-flex items-center gap-2 rounded-full border border-cyan-200/15 bg-white/[0.055] px-3 py-2 text-sm text-slate-200 transition hover:border-cyan-200/35 hover:bg-cyan-200/10 hover:text-white"
+              data-testid="nav-refund-simulator-link"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              Refund simulator
             </Link>
           </nav>
 
